@@ -16,5 +16,6 @@ class CoreConfig(AppConfig):
     def ready(self):
         """
         Méthode appelée lors du démarrage de l'application.
+        Permet d'initialiser des signaux ou d'autres configurations.
         """
-        import core.signals  # noqa 
+        pass 
