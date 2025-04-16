@@ -11,7 +11,11 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Login from './pages/Login';
+import ForgotPassword from './pages/ForgotPassword';
 import NotFound from './pages/NotFound';
+import Projects from './pages/Projects';
+import CreateProject from './pages/CreateProject';
+import RapportTechnique from './pages/RapportTechnique';
 
 // Configuration du client React Query
 const queryClient = new QueryClient({
@@ -32,8 +36,9 @@ const App: React.FC = () => {
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Routes>
-          {/* Route publique pour la connexion */}
+          {/* Routes publiques */}
           <Route path="/login" element={<Login />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
 
           {/* Routes protégées nécessitant une authentification */}
           <Route
@@ -44,7 +49,11 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           >
-            <Route index element={<Dashboard />} />
+            <Route index element={<Navigate to="/dashboard" replace />} />
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="projects" element={<Projects />} />
+            <Route path="projects/create" element={<CreateProject />} />
+            <Route path="rapport-technique" element={<RapportTechnique />} />
             <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>

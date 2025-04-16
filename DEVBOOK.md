@@ -7,6 +7,7 @@
 4. [Plan de développement](#plan-de-développement)
 5. [Tests et qualité](#tests-et-qualité)
 6. [Déploiement](#déploiement)
+7. [État actuel du développement](#état-actuel-du-développement)
 
 ## Questions et clarifications
 
@@ -144,3 +145,57 @@ Points clarifiés :
 - Logs centralisés
 - Métriques de performance
 - Alerting sur incidents 
+
+## État actuel du développement
+
+### Backend
+1. **Modèles implémentés** :
+   - Project (avec champs name, offer_delivery_date, maitre_ouvrage, maitre_oeuvre, status)
+   - TechnicalReport (avec relations vers Project et User)
+   - MOA et MOE pour la gestion des maîtrises d'ouvrage et d'œuvre
+
+2. **API REST** :
+   - Endpoints CRUD pour les projets
+   - Endpoints pour les rapports techniques
+   - Gestion des MOA/MOE
+   - Système de permissions configuré
+
+3. **Authentification** :
+   - Système JWT implémenté
+   - Gestion des utilisateurs configurée
+
+### Frontend
+1. **Pages principales** :
+   - Login/Register
+   - Liste des projets
+   - Création de projet
+   - Gestion des rapports techniques
+
+2. **Composants** :
+   - Navigation
+   - Formulaires de création/édition
+   - Liste des projets
+   - Interface MOA/MOE
+
+3. **Fonctionnalités** :
+   - Authentification utilisateur
+   - Gestion des projets
+   - Interface de création de rapports
+   - Sélection MOA/MOE
+
+### Prochaines étapes
+1. **Backend** :
+   - Optimisation des requêtes
+   - Implémentation des webhooks
+   - Système de notifications
+
+2. **Frontend** :
+   - Amélioration de l'UX
+   - Système de templates
+   - Éditeur WYSIWYG
+   - Drag & Drop pour les sections
+
+3. **Tests** :
+   - Tests unitaires backend
+   - Tests d'intégration frontend
+   - Tests end-to-end 

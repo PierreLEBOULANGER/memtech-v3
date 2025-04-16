@@ -10,35 +10,21 @@ from users.models import User
 class Project(models.Model):
     """
     Modèle représentant un projet dans l'application.
-    Permet de gérer les informations principales d'un projet et son équipe.
     """
     name = models.CharField(_('Nom'), max_length=200)
-    client = models.CharField(_('Client'), max_length=200)
-    description = models.TextField(_('Description'))
-    start_date = models.DateField(_('Date de début'))
-    end_date = models.DateField(_('Date de fin'), null=True, blank=True)
-    manager = models.ForeignKey(
-        User,
-        on_delete=models.PROTECT,
-        related_name='managed_projects',
-        verbose_name=_('Chef de projet')
-    )
-    team_members = models.ManyToManyField(
-        User,
-        related_name='project_memberships',
-        verbose_name=_('Membres de l\'équipe')
-    )
+    offer_delivery_date = models.DateField(_('Date de remise de l\'offre'), null=True)
+    maitre_ouvrage = models.CharField(_('Maître d\'ouvrage'), max_length=200, null=True)
+    maitre_oeuvre = models.CharField(_('Maître d\'œuvre'), max_length=200, null=True)
     status = models.CharField(
         _('Statut'),
         max_length=20,
         choices=[
-            ('DRAFT', _('Brouillon')),
-            ('ACTIVE', _('Actif')),
-            ('ON_HOLD', _('En pause')),
+            ('PENDING', _('En attente')),
+            ('IN_PROGRESS', _('En cours')),
             ('COMPLETED', _('Terminé')),
             ('CANCELLED', _('Annulé')),
         ],
-        default='DRAFT'
+        default='PENDING'
     )
     created_at = models.DateTimeField(_('Créé le'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Mis à jour le'), auto_now=True)

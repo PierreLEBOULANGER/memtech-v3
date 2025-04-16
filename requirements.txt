@@ -1,0 +1,36 @@
+# Django et extensions Django
+Django==5.0.3
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+djangorestframework-simplejwt==5.3.1
+
+# Base de données
+psycopg2-binary==2.9.9
+
+# Gestion des fichiers et PDF
+Pillow==10.2.0
+WeasyPrint==60.1
+
+# Tâches asynchrones
+celery==5.3.6
+redis==5.0.1
+
+# Tests
+pytest==8.0.2
+pytest-django==4.8.0
+
+# Outils de développement
+python-dotenv==1.0.1
+gunicorn==21.2.0
+
+# Sécurité
+python-jose==3.3.0
+cryptography==42.0.5
+
+# Variables d'environnement
+python-dotenv==1.0.1
+
+# Utilitaires
+python-magic==0.4.27
+python-magic-bin==0.4.14 

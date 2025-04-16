@@ -42,35 +42,14 @@ class ProjectViewSet(viewsets.ModelViewSet):
     destroy:
         Supprime un projet.
     """
-    permission_classes = [permissions.IsAuthenticated, IsProjectManagerOrReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
         """
         Retourne les projets accessibles par l'utilisateur.
         """
-        user = self.request.user
-        logger.debug(f"Récupération des projets pour l'utilisateur {user.username}")
-        
-        if user.is_staff:
-            logger.debug("Utilisateur admin : retourne tous les projets")
-            return Project.objects.all()
-            
-        projects = Project.objects.filter(
-            Q(manager=user) | Q(team_members=user)
-        ).distinct()
-        logger.debug(f"Nombre de projets trouvés : {projects.count()}")
-        return projects
+        return Project.objects.all()
 
-    def list(self, request, *args, **kwargs):
-        """
-        Liste les projets avec des logs détaillés.
-        """
-        logger.debug("Appel de la méthode list des projets")
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        logger.debug(f"Nombre de projets sérialisés : {len(serializer.data)}")
-        return Response(serializer.data)
-    
     def get_serializer_class(self):
         """
         Utilise différents sérialiseurs selon l'action :
@@ -80,69 +59,6 @@ class ProjectViewSet(viewsets.ModelViewSet):
         if self.action == 'list':
             return ProjectListSerializer
         return ProjectDetailSerializer
-    
-    def perform_create(self, serializer):
-        """
-        Crée un nouveau projet en définissant automatiquement
-        l'utilisateur courant comme manager si non spécifié.
-        """
-        if not serializer.validated_data.get('manager'):
-            serializer.save(manager=self.request.user)
-        else:
-            serializer.save()
-    
-    @action(detail=True, methods=['post'])
-    def add_team_member(self, request, pk=None):
-        """
-        Ajoute un membre à l'équipe du projet.
-        """
-        project = self.get_object()
-        user_id = request.data.get('user_id')
-        
-        if not user_id:
-            return Response(
-                {'error': 'L\'ID de l\'utilisateur est requis.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        try:
-            user = User.objects.get(id=user_id)
-            project.team_members.add(user)
-            return Response({'status': 'Membre ajouté avec succès.'})
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Utilisateur non trouvé.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-    
-    @action(detail=True, methods=['post'])
-    def remove_team_member(self, request, pk=None):
-        """
-        Retire un membre de l'équipe du projet.
-        """
-        project = self.get_object()
-        user_id = request.data.get('user_id')
-        
-        if not user_id:
-            return Response(
-                {'error': 'L\'ID de l\'utilisateur est requis.'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        try:
-            user = User.objects.get(id=user_id)
-            if user == project.manager:
-                return Response(
-                    {'error': 'Impossible de retirer le chef de projet.'},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
-            project.team_members.remove(user)
-            return Response({'status': 'Membre retiré avec succès.'})
-        except User.DoesNotExist:
-            return Response(
-                {'error': 'Utilisateur non trouvé.'},
-                status=status.HTTP_404_NOT_FOUND
-            )
     
     @action(detail=True, methods=['get'])
     def statistics(self, request, pk=None):
@@ -155,8 +71,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
             'reports_by_status': {
                 status: project.technical_reports.filter(status=status_code).count()
                 for status_code, status in TechnicalReport.STATUS_CHOICES
-            },
-            'team_size': project.team_members.count(),
+            }
         }
         return Response(stats)
 

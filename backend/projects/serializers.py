@@ -23,120 +23,44 @@ class ProjectListSerializer(serializers.ModelSerializer):
     Sérialiseur pour la liste des projets.
     Version allégée avec les informations essentielles.
     """
-    manager = UserMinimalSerializer(read_only=True)
     status_display = serializers.CharField(source='get_status_display', read_only=True)
     
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'client', 'status', 'status_display',
-            'start_date', 'end_date', 'manager', 'created_at'
+            'id', 'name', 'status', 'status_display',
+            'offer_delivery_date', 'maitre_ouvrage', 'maitre_oeuvre',
+            'created_at'
         ]
-
-class ProjectDetailSerializer(serializers.ModelSerializer):
-    """
-    Sérialiseur détaillé pour un projet individuel.
-    Inclut toutes les informations et les relations.
-    """
-    manager = UserMinimalSerializer(read_only=True)
-    manager_id = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        write_only=True,
-        source='manager'
-    )
-    team_members = UserMinimalSerializer(many=True, read_only=True)
-    team_member_ids = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        write_only=True,
-        source='team_members',
-        many=True,
-        required=False
-    )
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-    
-    class Meta:
-        model = Project
-        fields = [
-            'id', 'name', 'client', 'description',
-            'start_date', 'end_date',
-            'manager', 'manager_id',
-            'team_members', 'team_member_ids',
-            'status', 'status_display',
-            'created_at', 'updated_at'
-        ]
-        read_only_fields = ['created_at', 'updated_at']
-
-    def validate(self, data):
-        """
-        Validation personnalisée pour les dates et le statut.
-        """
-        if 'start_date' in data and 'end_date' in data:
-            if data['end_date'] and data['start_date'] > data['end_date']:
-                raise serializers.ValidationError(
-                    "La date de fin ne peut pas être antérieure à la date de début."
-                )
-        
-        # Validation du statut en fonction des dates
-        if 'status' in data and data['status'] == 'COMPLETED':
-            if not data.get('end_date'):
-                raise serializers.ValidationError(
-                    "Un projet terminé doit avoir une date de fin."
-                )
-        
-        return data
-
-    def create(self, validated_data):
-        """
-        Création d'un projet avec gestion des relations ManyToMany.
-        """
-        team_members = validated_data.pop('team_members', [])
-        project = Project.objects.create(**validated_data)
-        if team_members:
-            project.team_members.set(team_members)
-        return project
-
-    def update(self, instance, validated_data):
-        """
-        Mise à jour d'un projet avec gestion des relations ManyToMany.
-        """
-        team_members = validated_data.pop('team_members', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-        
-        if team_members is not None:
-            instance.team_members.set(team_members)
-        
-        return instance
 
 class ProjectSerializer(serializers.ModelSerializer):
     """
     Sérialiseur pour le modèle Project.
-    Inclut les informations sur le chef de projet et les membres de l'équipe.
     """
-    manager = UserSerializer(read_only=True)
-    manager_id = serializers.PrimaryKeyRelatedField(
-        source='manager',
-        queryset=User.objects.all(),
-        write_only=True
-    )
-    team_members = UserSerializer(many=True, read_only=True)
-    team_member_ids = serializers.PrimaryKeyRelatedField(
-        source='team_members',
-        queryset=User.objects.all(),
-        many=True,
-        write_only=True,
-        required=False
-    )
-
     class Meta:
         model = Project
-        fields = (
-            'id', 'name', 'client', 'description', 'start_date', 'end_date',
-            'status', 'manager', 'manager_id', 'team_members', 'team_member_ids',
+        fields = [
+            'id', 'name', 'offer_delivery_date',
+            'maitre_ouvrage', 'maitre_oeuvre',
+            'status', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class ProjectDetailSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur détaillé pour un projet individuel.
+    """
+    status_display = serializers.CharField(source='get_status_display', read_only=True)
+    
+    class Meta:
+        model = Project
+        fields = [
+            'id', 'name', 'offer_delivery_date',
+            'maitre_ouvrage', 'maitre_oeuvre',
+            'status', 'status_display',
             'created_at', 'updated_at'
-        )
-        read_only_fields = ('id', 'created_at', 'updated_at')
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 class TechnicalReportSerializer(serializers.ModelSerializer):
     """

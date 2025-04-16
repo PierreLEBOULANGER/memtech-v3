@@ -1,9 +1,8 @@
 """
-Configuration WSGI pour le projet backend.
+Configuration WSGI pour le projet MemTech
 """
 
 import os
-
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')

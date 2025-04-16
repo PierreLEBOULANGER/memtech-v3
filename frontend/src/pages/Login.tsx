@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import authService, { LoginCredentials } from '../services/authService';
 
 interface LoginError {
@@ -17,16 +17,8 @@ interface LoginError {
  * Gère l'authentification des utilisateurs via l'API
  */
 const Login: React.FC = () => {
-  console.log('Rendu du composant Login');
-
-  useEffect(() => {
-    console.log('Login - useEffect mounted');
-    return () => {
-      console.log('Login - useEffect unmounted');
-    };
-  }, []);
-
   const navigate = useNavigate();
+  const location = useLocation();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: ''
@@ -34,6 +26,15 @@ const Login: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Vérifier si l'utilisateur est déjà connecté
+  useEffect(() => {
+    const accessToken = localStorage.getItem('access_token');
+    if (accessToken) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [navigate, location]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -50,14 +51,15 @@ const Login: React.FC = () => {
 
     try {
       console.log('Tentative de connexion avec:', { email: credentials.email });
-      const user = await authService.login(credentials);
-      console.log('Connexion réussie:', user);
+      const response = await authService.login(credentials);
+      console.log('Connexion réussie:', response);
       
       if (rememberMe) {
         localStorage.setItem('remember_me', 'true');
       }
       
-      navigate('/dashboard');
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
     } catch (err) {
       console.error('Erreur de connexion:', err);
       const errorMessage = err instanceof Error 

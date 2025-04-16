@@ -1,9 +1,8 @@
 """
-Configuration ASGI pour le projet backend.
+Configuration ASGI pour le projet MemTech
 """
 
 import os
-
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
