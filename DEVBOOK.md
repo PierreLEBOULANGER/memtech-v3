@@ -2,200 +2,188 @@
 
 ## Table des matières
 1. [Questions et clarifications](#questions-et-clarifications)
-2. [Migration des données](#migration-des-données)
-3. [Architecture et choix techniques](#architecture-et-choix-techniques)
-4. [Plan de développement](#plan-de-développement)
-5. [Tests et qualité](#tests-et-qualité)
-6. [Déploiement](#déploiement)
-7. [État actuel du développement](#état-actuel-du-développement)
+2. [Architecture et choix techniques](#architecture-et-choix-techniques)
+3. [Plan de développement](#plan-de-développement)
+4. [Tests et qualité](#tests-et-qualité)
+5. [Déploiement](#déploiement)
+6. [État actuel du développement](#état-actuel-du-développement)
+7. [Structure des Projets et Documents](#structure-des-projets-et-documents)
 
 ## Questions et clarifications
 
 Points clarifiés :
 
 1. **Base de données** : 
-   - Migration de SQLite vers PostgreSQL
-   - Nécessité de migrer les données existantes de memos.db
-   - Raisons du changement :
-     - Meilleure gestion de la concurrence
-     - Facilité de sauvegarde
-     - Scalabilité future
+   - Utilisation de SQLite comme base de données par défaut
+   - Base de données stockée dans le dossier `data/memos.db`
+   - Choix adapté pour :
+     - Simplicité de configuration
+     - Portabilité du projet
+     - Facilité de sauvegarde (un seul fichier)
 
 2. **Authentification** :
-   - Système simple avec email/mot de passe
-   - Un seul type d'utilisateur (pas de différenciation Admin/Rédacteur)
-   - Pas de 2FA nécessaire
+   - Système avec JWT (JSON Web Tokens)
+   - Deux types d'utilisateurs : ADMIN et USER
+   - Vérification du mot de passe administrateur pour les opérations sensibles
+   - Gestion des permissions basée sur les rôles
 
 3. **Stockage des fichiers** :
    - Configuration initiale standard :
      - Limite de taille par défaut : 10MB par fichier
      - Durée de conservation : illimitée
-     - Ces paramètres pourront être ajustés selon les besoins
+     - Types de fichiers acceptés : PDF pour RC et CCTP
+     - Stockage organisé par projet : `/media/projects/<project_id>/`
 
-## Migration des données
+## Structure des Projets et Documents
 
-### Plan de migration SQLite vers PostgreSQL
+### Documents par Projet
 
-1. **Analyse préliminaire**
-   - Extraction du schéma de memos.db
-   - Identification des données à migrer
-   - Validation de l'intégrité des données
+1. **Documents de Référence (PDF)** :
+   - RC (Règlement de Consultation)
+   - CCTP (Cahier des Clauses Techniques Particulières)
+   - Stockés dans `/reference_documents/` par projet
 
-2. **Processus de migration**
-   - Création d'un script de migration Python
-   - Tests de la migration sur un environnement de staging
-   - Validation des données migrées
-   - Plan de rollback en cas de problème
+2. **Documents Techniques à Produire** :
+   - Mémoire technique
+   - SOGED (Schéma d'Organisation de Gestion et d'Élimination des Déchets)
+   - SOPAQ (Schéma d'Organisation du Plan d'Assurance Qualité)
+   - SOPRE (Schéma d'Organisation du Plan de Respect de l'Environnement)
+   - PPSPS (Plan Particulier de Sécurité et de Protection de la Santé)
+   - PAQ (Plan d'Assurance Qualité)
+   - Gestion via le modèle `ProjectDocument`
 
-3. **Étapes de la migration**
-   - Sauvegarde complète de memos.db
-   - Conversion du schéma SQLite vers PostgreSQL
-   - Migration des données
-   - Vérification de l'intégrité
-   - Tests fonctionnels post-migration
+### Workflow des Documents
+
+1. **États des Documents** :
+   - NOT_STARTED (Non commencé)
+   - IN_PROGRESS (En cours de rédaction)
+   - UNDER_REVIEW (En relecture)
+   - IN_CORRECTION (En correction)
+   - APPROVED (Validé)
+
+2. **Système de Validation** :
+   - Workflow implémenté dans `ProjectDocument`
+   - Historique des modifications via `updated_at`
+   - Système de relecteurs multiples
+   - Gestion des versions et statuts
 
 ## Architecture et choix techniques
 
 ### Frontend
-- React + TypeScript
-- Shadcn/UI + TailwindCSS
-- État global : Redux Toolkit
-- Tests : Jest + React Testing Library
-- Outils supplémentaires :
-  - React-DnD pour le drag & drop
-  - TinyMCE pour l'éditeur WYSIWYG
-  - React-Query pour la gestion des requêtes API
+- React + TypeScript + Vite
+- Shadcn/UI + TailwindCSS pour l'interface
+- React Query pour la gestion des requêtes API
+- Gestion des formulaires avec validation
+- Composants réutilisables dans `components/ui`
 
 ### Backend
 - Django + Django REST Framework
-- Base de données : PostgreSQL (à confirmer)
-- Tests : PyTest
-- Outils supplémentaires :
-  - WeasyPrint pour la génération PDF
-  - Celery pour les tâches asynchrones
-  - Django Storages pour la gestion des fichiers
-
-## Plan de développement
-
-### Phase 1 : Configuration et infrastructure
-1. Configuration du projet GitHub
-2. Mise en place de l'environnement de développement
-3. Configuration CI/CD
-4. Création des premiers tests d'infrastructure
-
-### Phase 2 : Backend - Fonctionnalités de base
-1. Modèles de données
-2. API REST
-3. Authentification
-4. Tests unitaires et d'intégration
-
-### Phase 3 : Frontend - Structure de base
-1. Configuration React + TypeScript
-2. Mise en place du design system
-3. Routing et layout de base
-4. Tests des composants principaux
-
-### Phase 4 : Gestion des mémoires
-1. CRUD des projets
-2. Système de templates
-3. Éditeur WYSIWYG
-4. Tests fonctionnels
-
-### Phase 5 : Fonctionnalités avancées
-1. Intégration IA (OpenAI)
-2. Système de drag & drop
-3. Génération PDF
-4. Tests end-to-end
-
-### Phase 6 : Finalisation
-1. Optimisation des performances
-2. Documentation
-3. Tests de charge
-4. Déploiement en production
-
-## Tests et qualité
-
-### Stratégie de test
-- TDD systématique
-- Tests unitaires pour chaque composant
-- Tests d'intégration pour les flux principaux
-- Tests end-to-end pour les parcours utilisateur critiques
-
-### Qualité du code
-- ESLint + Prettier pour le frontend
-- Black + Flake8 pour le backend
-- Revue de code systématique
-- Couverture de tests minimale : 80%
-
-## Déploiement
-
-### Environnements
-- Développement : Local
-- Test : Serveur de staging
-- Production : À définir
-
-### CI/CD
-- GitHub Actions pour :
-  - Tests automatisés
-  - Analyse de qualité du code
-  - Déploiement automatique
-  - Génération de la documentation
-
-### Monitoring
-- Logs centralisés
-- Métriques de performance
-- Alerting sur incidents 
+- Base de données : SQLite
+- Système de permissions basé sur les rôles
+- API RESTful avec endpoints documentés
+- Gestion des fichiers avec Django File Storage
 
 ## État actuel du développement
 
+### Mise à jour du 21/04/2024
+
+#### Nouvelles fonctionnalités implémentées
+1. **Authentification** :
+   - Système JWT avec gestion des rôles ADMIN/USER
+   - Vérification du mot de passe administrateur pour les opérations sensibles
+   - Protection des routes sensibles
+
+2. **Gestion des Projets** :
+   - CRUD complet des projets avec validation
+   - Système de suppression sécurisée avec confirmation admin
+   - Filtrage et recherche des projets
+   - Interface responsive avec mode liste/grille
+
+3. **Documents** :
+   - Système de documents requis fonctionnel
+   - Upload des documents de référence (RC/CCTP)
+   - Organisation des fichiers par projet
+
+#### Modifications techniques
+1. **Frontend** :
+   - Migration vers Vite pour le développement
+   - Implémentation de React Query pour la gestion des requêtes
+   - Nouveau système de composants UI avec Shadcn
+
+2. **Backend** :
+   - Nouveau modèle ProjectDocument pour la gestion des documents
+   - API endpoints pour la gestion des documents requis
+   - Système de permissions basé sur les rôles
+
+#### Problèmes identifiés
+1. **Performance** :
+   - Erreur 431 (Headers too large) sur certaines requêtes HMR
+   - Optimisation nécessaire des requêtes API
+   - Gestion de la mémoire à améliorer
+
+2. **Documentation** :
+   - Documentation API à compléter
+   - Besoin de documentation utilisateur
+
 ### Backend
-1. **Modèles implémentés** :
-   - Project (avec champs name, offer_delivery_date, maitre_ouvrage, maitre_oeuvre, status)
-   - TechnicalReport (avec relations vers Project et User)
-   - MOA et MOE pour la gestion des maîtrises d'ouvrage et d'œuvre
+1. **Modèles à implémenter** : ✅
+   - Project (mise à jour avec documents requis et références)
+   - DocumentType (configuration des types de documents)
+   - Document (instance d'un document technique)
+   - DocumentVersion (gestion des versions)
+   - DocumentValidation (workflow de validation)
 
-2. **API REST** :
-   - Endpoints CRUD pour les projets
-   - Endpoints pour les rapports techniques
-   - Gestion des MOA/MOE
-   - Système de permissions configuré
+2. **API REST** : ✅
+   - Endpoints CRUD pour les projets et documents
+   - Gestion des workflows de validation
+   - Upload et téléchargement des PDF
+   - Calcul des états d'avancement
 
-3. **Authentification** :
+3. **Authentification** : ✅
    - Système JWT implémenté
-   - Gestion des utilisateurs configurée
+   - Gestion des rôles pour la validation
 
 ### Frontend
-1. **Pages principales** :
-   - Login/Register
-   - Liste des projets
-   - Création de projet
-   - Gestion des rapports techniques
+1. **Pages principales** : ✅
+   - Liste des projets avec filtres et recherche
+   - Création de projet avec sélection des documents
+   - Vue détaillée du projet
+   - Interface de gestion des documents
 
-2. **Composants** :
-   - Navigation
-   - Formulaires de création/édition
-   - Liste des projets
-   - Interface MOA/MOE
+2. **Composants** : ✅
+   - ProjectCard (affichage détaillé des projets)
+   - ProjectList (liste avec filtres)
+   - DeleteProjectDialog (suppression sécurisée)
+   - ProjectFilters (filtrage et tri)
 
-3. **Fonctionnalités** :
-   - Authentification utilisateur
-   - Gestion des projets
-   - Interface de création de rapports
-   - Sélection MOA/MOE
+3. **Fonctionnalités** : ⏳
+   - Création de projet avec documents requis ✅
+   - Upload des documents de référence ✅
+   - Gestion des statuts et progression ✅
+   - Interface responsive et moderne ✅
+   - Éditeur de documents techniques ⏳
+   - Système de validation et workflow ⏳
 
-### Prochaines étapes
-1. **Backend** :
-   - Optimisation des requêtes
-   - Implémentation des webhooks
+### Prochaines étapes prioritaires
+1. **Correction des bugs** :
+   - Résolution de l'erreur 431 HMR
+   - Optimisation des requêtes API
+   - Amélioration de la gestion mémoire
+
+2. **Nouvelles fonctionnalités** :
+   - Éditeur de documents techniques
+   - Interface de validation
+   - Tableau de bord statistiques
    - Système de notifications
 
-2. **Frontend** :
-   - Amélioration de l'UX
-   - Système de templates
-   - Éditeur WYSIWYG
-   - Drag & Drop pour les sections
+3. **Tests et Documentation** :
+   - Tests unitaires frontend
+   - Tests d'intégration API
+   - Documentation utilisateur
+   - Documentation API
 
-3. **Tests** :
-   - Tests unitaires backend
-   - Tests d'intégration frontend
-   - Tests end-to-end 
+## Problèmes connus
+1. Erreur 431 sur certaines requêtes HMR (Headers too large)
+2. Optimisation nécessaire des requêtes API
+3. Gestion de la mémoire à améliorer
+4. Documentation API à compléter 

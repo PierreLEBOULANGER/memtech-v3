@@ -1,121 +1,163 @@
 /**
  * Projects.tsx
- * Page de gestion des projets
- * Affiche la liste des projets et permet d'en créer de nouveaux
+ * Page principale de gestion des projets
+ * Intègre tous les composants de gestion des projets
  */
 
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import ProjectService from '../services/projectService';
-import { Box, Typography, Button, Card, CardContent, Grid } from '@mui/material';
-import AddIcon from '@mui/icons-material/Add';
-
-// Interface définissant la structure d'un projet
-interface Project {
-  id: number;
-  name: string;
-  offer_delivery_date: string;
-  maitre_ouvrage: string;
-  maitre_oeuvre: string;
-  status: string;
-}
+import ProjectHeader from '../components/projects/ProjectHeader';
+import ProjectFilters from '../components/projects/ProjectFilters';
+import ProjectCard from '../components/projects/ProjectCard';
+import { Project } from '../types/project';
 
 const Projects: React.FC = () => {
+  // États
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // États pour les filtres
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
+  // Fonction pour rafraîchir la liste des projets
+  const refreshProjects = async () => {
+    try {
+      setLoading(true);
+      const data = await ProjectService.getProjects();
+      console.log('Projets reçus:', data); // Ajout de log pour debug
+      setProjects(data);
+    } catch (error) {
+      setError('Erreur lors du chargement des projets');
+      console.error('Erreur:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Utilisation de refreshProjects dans useEffect
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const data = await ProjectService.getProjects();
-        // Assurez-vous que les données reçues correspondent à l'interface Project
-        const formattedProjects = data.map((project: any) => ({
-          id: project.id || 0,
-          name: project.name || '',
-          offer_delivery_date: project.offer_delivery_date || '',
-          maitre_ouvrage: project.maitre_ouvrage || '',
-          maitre_oeuvre: project.maitre_oeuvre || '',
-          status: project.status || ''
-        }));
-        setProjects(formattedProjects);
-      } catch (error) {
-        setError('Erreur lors du chargement des projets');
-        console.error('Erreur:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjects();
+    refreshProjects();
   }, []);
+
+  // Filtrage et tri des projets
+  const filteredAndSortedProjects = React.useMemo(() => {
+    return projects
+      .filter(project => {
+        const matchesSearch = project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (project.maitre_ouvrage?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+          (project.maitre_oeuvre?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+        
+        const matchesStatus = !selectedStatus || project.status === selectedStatus;
+        
+        return matchesSearch && matchesStatus;
+      })
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'name':
+            return a.name.localeCompare(b.name);
+          case 'created_at':
+            return new Date(b.offer_delivery_date).getTime() - new Date(a.offer_delivery_date).getTime();
+          case 'status':
+            return a.status.localeCompare(b.status);
+          case 'completion':
+            return b.completion_percentage - a.completion_percentage;
+          default:
+            return 0;
+        }
+      });
+  }, [projects, searchQuery, selectedStatus, sortBy]);
+
+  // Statistiques pour l'en-tête
+  const completedProjects = projects.filter(p => p.status === 'COMPLETED').length;
 
   if (loading) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Chargement des projets...</Typography>
-      </Box>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#ffec00]"></div>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3 }}>
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="bg-red-500/10 text-red-500 p-4 rounded-lg">
+          <p className="text-lg font-semibold">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-2 text-sm underline hover:no-underline"
+          >
+            Réessayer
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Projets
-        </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<AddIcon />}
-          component={Link}
-          to="/projects/create"
-        >
-          Nouveau projet
-        </Button>
-      </Box>
+    <div className="space-y-6 p-6">
+      {/* En-tête */}
+      <ProjectHeader
+        totalProjects={projects.length}
+        completedProjects={completedProjects}
+      />
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', md: '1fr 1fr 1fr' }, gap: 3 }}>
-        {projects.map((project) => (
-          <Card key={project.id}>
-            <CardContent>
-              <Typography variant="h6" component="h2" gutterBottom>
-                {project.name}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Maître d'ouvrage: {project.maitre_ouvrage}
-              </Typography>
-              <Typography variant="body2" color="textSecondary" gutterBottom>
-                Maître d'œuvre: {project.maitre_oeuvre}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Date de remise: {new Date(project.offer_delivery_date).toLocaleDateString()}
-              </Typography>
-              <Typography variant="body2" color="textSecondary">
-                Statut: {project.status}
-              </Typography>
-              <Button
-                component={Link}
-                to={`/projects/${project.id}`}
-                color="primary"
-                sx={{ mt: 2 }}
-              >
-                Voir les détails
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </Box>
-    </Box>
+      {/* Filtres */}
+      <ProjectFilters
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        selectedStatus={selectedStatus}
+        setSelectedStatus={setSelectedStatus}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        viewMode={viewMode}
+        setViewMode={setViewMode}
+      />
+
+      {/* Liste des projets avec onDelete prop */}
+      {filteredAndSortedProjects.length === 0 ? (
+        <div className="text-center py-12">
+          <svg
+            className="mx-auto h-12 w-12 text-gray-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+          <h3 className="mt-2 text-sm font-medium text-gray-400">Aucun projet trouvé</h3>
+          <p className="mt-1 text-sm text-gray-500">
+            {searchQuery || selectedStatus
+              ? 'Essayez de modifier vos filtres'
+              : 'Commencez par créer un nouveau projet'}
+          </p>
+        </div>
+      ) : (
+        <div className={
+          viewMode === 'grid'
+            ? "grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
+            : "space-y-4"
+        }>
+          {filteredAndSortedProjects.map((project) => (
+            <ProjectCard 
+              key={project.id} 
+              project={project} 
+              onDelete={refreshProjects}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
-export default Projects; 
+export default Projects;

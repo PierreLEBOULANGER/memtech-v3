@@ -1,12 +1,16 @@
 """
 Sérialiseurs pour l'application projects.
-Gère la sérialisation et la désérialisation des modèles Project et TechnicalReport.
+Gère la sérialisation et la désérialisation des modèles Project et documents associés.
 """
 
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Project, TechnicalReport
+from .models import (
+    Project, TechnicalReport, DocumentType,
+    ReferenceDocument, ProjectDocument
+)
 from users.serializers import UserSerializer
+from moas.serializers import MOASerializer, MOESerializer
 
 User = get_user_model()
 
@@ -18,19 +22,70 @@ class UserMinimalSerializer(serializers.ModelSerializer):
         model = User
         fields = ['id', 'email', 'first_name', 'last_name']
 
+class DocumentTypeSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour les types de documents.
+    """
+    class Meta:
+        model = DocumentType
+        fields = ['id', 'type', 'description', 'is_mandatory']
+
+class ReferenceDocumentSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour les documents de référence (RC, CCTP, etc.).
+    """
+    project = serializers.PrimaryKeyRelatedField(read_only=True)
+    type_display = serializers.CharField(source='get_type_display', read_only=True)
+
+    class Meta:
+        model = ReferenceDocument
+        fields = [
+            'id', 'project', 'type', 'type_display',
+            'file', 'uploaded_at'
+        ]
+
+class ProjectDocumentSerializer(serializers.ModelSerializer):
+    """
+    Sérialiseur pour les documents du projet.
+    """
+    project = serializers.PrimaryKeyRelatedField(read_only=True)
+    uploaded_by = UserSerializer(read_only=True)
+    reviewers = UserSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = ProjectDocument
+        fields = [
+            'id', 'project', 'document_type', 'file',
+            'uploaded_by', 'uploaded_at', 'version',
+            'status', 'reviewers', 'review_deadline'
+        ]
+
+class ProjectDocumentDetailSerializer(ProjectDocumentSerializer):
+    """
+    Sérialiseur détaillé pour les documents du projet.
+    Inclut l'historique des versions et les commentaires.
+    """
+    class Meta(ProjectDocumentSerializer.Meta):
+        fields = ProjectDocumentSerializer.Meta.fields + [
+            'review_comments', 'review_history'
+        ]
+
 class ProjectListSerializer(serializers.ModelSerializer):
     """
-    Sérialiseur pour la liste des projets.
-    Version allégée avec les informations essentielles.
+    Sérialiseur léger pour la liste des projets.
     """
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    completion_percentage = serializers.FloatField(source='get_completion_percentage', read_only=True)
+    maitre_ouvrage = MOASerializer(read_only=True)
+    maitre_oeuvre = MOESerializer(read_only=True)
     
     class Meta:
         model = Project
         fields = [
             'id', 'name', 'status', 'status_display',
-            'offer_delivery_date', 'maitre_ouvrage', 'maitre_oeuvre',
-            'created_at'
+            'maitre_ouvrage', 'maitre_oeuvre',
+            'completion_percentage', 'offer_delivery_date',
+            'created_at', 'updated_at'
         ]
 
 class ProjectSerializer(serializers.ModelSerializer):
@@ -42,164 +97,49 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'name', 'offer_delivery_date',
             'maitre_ouvrage', 'maitre_oeuvre',
-            'status', 'created_at', 'updated_at'
+            'required_documents', 'status',
+            'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 class ProjectDetailSerializer(serializers.ModelSerializer):
     """
-    Sérialiseur détaillé pour un projet individuel.
+    Sérialiseur détaillé pour un projet spécifique.
     """
     status_display = serializers.CharField(source='get_status_display', read_only=True)
+    technical_reports = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    reference_documents = ReferenceDocumentSerializer(many=True, read_only=True)
+    project_documents = ProjectDocumentSerializer(many=True, read_only=True)
+    required_documents = DocumentTypeSerializer(many=True, read_only=True)
     
     class Meta:
         model = Project
         fields = [
-            'id', 'name', 'offer_delivery_date',
-            'maitre_ouvrage', 'maitre_oeuvre',
-            'status', 'status_display',
-            'created_at', 'updated_at'
+            'id', 'name', 'description', 'status',
+            'status_display', 'maitre_ouvrage', 'maitre_oeuvre',
+            'created_at', 'updated_at', 'technical_reports',
+            'reference_documents', 'project_documents',
+            'required_documents'
         ]
-        read_only_fields = ['created_at', 'updated_at']
-
-class TechnicalReportSerializer(serializers.ModelSerializer):
-    """
-    Sérialiseur pour le modèle TechnicalReport.
-    Inclut les informations sur l'auteur, les relecteurs et le projet associé.
-    """
-    author = UserSerializer(read_only=True)
-    author_id = serializers.PrimaryKeyRelatedField(
-        source='author',
-        queryset=User.objects.all(),
-        write_only=True
-    )
-    reviewers = UserSerializer(many=True, read_only=True)
-    reviewer_ids = serializers.PrimaryKeyRelatedField(
-        source='reviewers',
-        queryset=User.objects.all(),
-        many=True,
-        write_only=True,
-        required=False
-    )
-    project = ProjectSerializer(read_only=True)
-    project_id = serializers.PrimaryKeyRelatedField(
-        source='project',
-        queryset=Project.objects.all(),
-        write_only=True
-    )
-
-    class Meta:
-        model = TechnicalReport
-        fields = (
-            'id', 'title', 'content', 'status', 'project', 'project_id',
-            'author', 'author_id', 'reviewers', 'reviewer_ids',
-            'created_at', 'updated_at'
-        )
-        read_only_fields = ('id', 'created_at', 'updated_at')
 
 class TechnicalReportListSerializer(serializers.ModelSerializer):
     """
-    Sérialiseur pour la liste des rapports techniques.
-    Version allégée avec les informations essentielles.
+    Sérialiseur léger pour la liste des rapports techniques.
     """
-    author = UserMinimalSerializer(read_only=True)
-    project_name = serializers.CharField(source='project.name', read_only=True)
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-
     class Meta:
         model = TechnicalReport
-        fields = [
-            'id', 'title', 'project', 'project_name',
-            'author', 'status', 'status_display',
-            'created_at'
-        ]
+        fields = ['id', 'title', 'created_at', 'updated_at']
 
 class TechnicalReportDetailSerializer(serializers.ModelSerializer):
     """
-    Sérialiseur détaillé pour un rapport technique individuel.
-    Inclut toutes les informations et les relations.
+    Sérialiseur détaillé pour un rapport technique spécifique.
     """
-    author = UserMinimalSerializer(read_only=True)
-    reviewers = UserMinimalSerializer(many=True, read_only=True)
-    reviewer_ids = serializers.PrimaryKeyRelatedField(
-        queryset=User.objects.all(),
-        write_only=True,
-        source='reviewers',
-        many=True,
-        required=False
-    )
-    project = ProjectListSerializer(read_only=True)
-    project_id = serializers.PrimaryKeyRelatedField(
-        queryset=Project.objects.all(),
-        write_only=True,
-        source='project'
-    )
-    status_display = serializers.CharField(source='get_status_display', read_only=True)
-
+    author = UserSerializer(read_only=True)
+    project = serializers.PrimaryKeyRelatedField(read_only=True)
+    
     class Meta:
         model = TechnicalReport
         fields = [
-            'id', 'title', 'content',
-            'project', 'project_id',
-            'author', 'reviewers', 'reviewer_ids',
-            'status', 'status_display',
-            'created_at', 'updated_at'
+            'id', 'title', 'content', 'author',
+            'project', 'created_at', 'updated_at'
         ]
-        read_only_fields = ['created_at', 'updated_at', 'author']
-
-    def validate_project(self, value):
-        """
-        Vérifie que l'utilisateur a accès au projet.
-        """
-        user = self.context['request'].user
-        if not (user.is_staff or 
-                value.manager == user or 
-                user in value.team_members.all()):
-            raise serializers.ValidationError(
-                "Vous n'avez pas accès à ce projet."
-            )
-        return value
-
-    def validate(self, data):
-        """
-        Validation personnalisée pour le statut et les relecteurs.
-        """
-        if self.instance and self.instance.status == 'APPROVED':
-            if data.get('status', 'APPROVED') != 'APPROVED':
-                raise serializers.ValidationError(
-                    "Impossible de modifier un rapport déjà validé."
-                )
-
-        if data.get('status') == 'APPROVED' and not data.get('reviewers', []):
-            raise serializers.ValidationError(
-                "Un rapport ne peut pas être validé sans relecteurs."
-            )
-
-        return data
-
-    def create(self, validated_data):
-        """
-        Création d'un rapport avec l'auteur automatiquement défini.
-        """
-        reviewers = validated_data.pop('reviewers', [])
-        report = TechnicalReport.objects.create(
-            author=self.context['request'].user,
-            **validated_data
-        )
-        if reviewers:
-            report.reviewers.set(reviewers)
-        return report
-
-    def update(self, instance, validated_data):
-        """
-        Mise à jour d'un rapport avec gestion des relecteurs.
-        """
-        reviewers = validated_data.pop('reviewers', None)
-        for attr, value in validated_data.items():
-            setattr(instance, attr, value)
-        instance.save()
-
-        if reviewers is not None:
-            instance.reviewers.set(reviewers)
-
-        return instance 

@@ -7,11 +7,16 @@ import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
+// URLs d'authentification
+const AUTH_URLS = {
+    login: '/api/auth/login/',
+    refresh: '/api/auth/refresh/',
+    logout: '/api/auth/logout/',
+    verify: '/api/auth/verify/'
+};
+
 const api = axios.create({
     baseURL: BASE_URL,
-    headers: {
-        'Content-Type': 'application/json',
-    },
 });
 
 // Intercepteur pour ajouter le token d'authentification
@@ -20,6 +25,12 @@ api.interceptors.request.use(
         const token = localStorage.getItem('access_token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+        }
+        // Ne pas définir Content-Type pour les requêtes multipart/form-data
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        } else {
+            config.headers['Content-Type'] = 'application/json';
         }
         return config;
     },
@@ -46,7 +57,7 @@ api.interceptors.response.use(
 
                 // Tentative de rafraîchissement du token
                 const response = await axios.post(
-                    `${BASE_URL}/api/token/refresh/`,
+                    `${BASE_URL}${AUTH_URLS.refresh}`,
                     { refresh: refreshToken }
                 );
 
@@ -69,4 +80,5 @@ api.interceptors.response.use(
     }
 );
 
+export { AUTH_URLS };
 export default api; 

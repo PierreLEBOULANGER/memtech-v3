@@ -1,18 +1,26 @@
 """
 Vues pour l'application projects.
-Gère les endpoints API pour les projets et les rapports techniques.
+Gère les endpoints API pour les projets et les documents associés.
 """
 
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework import viewsets, permissions, status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.db.models import Q
 from django.utils import timezone
-from .models import Project, TechnicalReport
+from .models import (
+    Project, TechnicalReport, DocumentType,
+    ReferenceDocument, ProjectDocument
+)
 from .serializers import (
     ProjectListSerializer, ProjectDetailSerializer,
-    TechnicalReportListSerializer, TechnicalReportDetailSerializer
+    TechnicalReportListSerializer, TechnicalReportDetailSerializer,
+    DocumentTypeSerializer, ReferenceDocumentSerializer,
+    ProjectDocumentSerializer, ProjectDocumentDetailSerializer,
+    ProjectSerializer
 )
 from .permissions import (
     IsProjectManagerOrReadOnly, IsProjectTeamMember,
@@ -20,45 +28,116 @@ from .permissions import (
 )
 from django.contrib.auth.models import User
 import logging
+from django.contrib.auth.hashers import check_password
+from django.core.exceptions import PermissionDenied
 
 logger = logging.getLogger(__name__)
 
 # Create your views here.
 
-class ProjectViewSet(viewsets.ModelViewSet):
+class DocumentTypeViewSet(viewsets.ReadOnlyModelViewSet):
     """
-    ViewSet pour gérer les opérations CRUD sur les projets.
-    
-    list:
-        Retourne la liste des projets accessibles par l'utilisateur.
-    retrieve:
-        Retourne les détails d'un projet spécifique.
-    create:
-        Crée un nouveau projet.
-    update:
-        Met à jour un projet existant.
-    partial_update:
-        Met à jour partiellement un projet existant.
-    destroy:
-        Supprime un projet.
+    ViewSet pour les types de documents (SOGED, SOPAQ, etc.).
+    Lecture seule car les types sont prédéfinis.
+    """
+    queryset = DocumentType.objects.all()
+    serializer_class = DocumentTypeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class ReferenceDocumentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet pour gérer les documents de référence (RC, CCTP).
+    """
+    serializer_class = ReferenceDocumentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = (MultiPartParser, FormParser)
+
+    def get_queryset(self):
+        return ReferenceDocument.objects.filter(project_id=self.kwargs['project_pk'])
+
+    def perform_create(self, serializer):
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        serializer.save(project=project)
+
+class ProjectDocumentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet pour gérer les documents techniques du projet.
     """
     permission_classes = [permissions.IsAuthenticated]
-    
+
+    def get_queryset(self):
+        return ProjectDocument.objects.filter(project_id=self.kwargs['project_pk'])
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ProjectDocumentDetailSerializer
+        return ProjectDocumentSerializer
+
+    def perform_create(self, serializer):
+        project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
+        serializer.save(
+            project=project,
+            author=self.request.user
+        )
+
+    @action(detail=True, methods=['post'])
+    def assign_reviewers(self, request, project_pk=None, pk=None):
+        """
+        Assigne des relecteurs au document
+        """
+        document = self.get_object()
+        reviewer_ids = request.data.get('reviewer_ids', [])
+        document.reviewers.set(reviewer_ids)
+        return Response({'status': 'reviewers assigned'})
+
+    @action(detail=True, methods=['post'])
+    def change_status(self, request, project_pk=None, pk=None):
+        """
+        Change le statut du document
+        """
+        document = self.get_object()
+        new_status = request.data.get('status')
+        if new_status not in dict(ProjectDocument.STATUS_CHOICES):
+            return Response(
+                {'error': 'Invalid status'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        document.status = new_status
+        document.save()
+        serializer = self.get_serializer(document)
+        return Response(serializer.data)
+
+class ProjectViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet pour la gestion des projets.
+    Permet les opérations CRUD sur les projets et inclut des actions personnalisées.
+    """
+    serializer_class = ProjectSerializer
+    permission_classes = [IsAuthenticated]
+
     def get_queryset(self):
         """
-        Retourne les projets accessibles par l'utilisateur.
+        Retourne le queryset des projets en excluant les projets supprimés.
         """
-        return Project.objects.all()
+        return Project.objects.filter(deleted_at__isnull=True)
+
+    def perform_destroy(self, instance):
+        """
+        Effectue une suppression douce du projet au lieu d'une suppression physique.
+        """
+        instance.soft_delete(self.request.user)
 
     def get_serializer_class(self):
         """
-        Utilise différents sérialiseurs selon l'action :
-        - Liste : version allégée
-        - Détail : version complète
+        Utilise différents sérialiseurs selon l'action.
         """
         if self.action == 'list':
             return ProjectListSerializer
-        return ProjectDetailSerializer
+        elif self.action in ['retrieve', 'documents_status']:
+            return ProjectDetailSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return ProjectSerializer
+        return ProjectListSerializer
     
     @action(detail=True, methods=['get'])
     def statistics(self, request, pk=None):
@@ -74,6 +153,95 @@ class ProjectViewSet(viewsets.ModelViewSet):
             }
         }
         return Response(stats)
+
+    @action(detail=True, methods=['post'])
+    def add_required_documents(self, request, pk=None):
+        """
+        Ajoute des types de documents requis au projet
+        """
+        project = self.get_object()
+        document_type_ids = request.data.get('document_type_ids', [])
+        
+        # Récupérer les types de documents
+        document_types = [
+            get_object_or_404(DocumentType, id=doc_type_id)
+            for doc_type_id in document_type_ids
+        ]
+        
+        # Ajouter les types de documents au projet
+        project.required_documents.add(*document_types)
+        
+        serializer = self.get_serializer(project)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def documents_status(self, request, pk=None):
+        """
+        Retourne un résumé détaillé de l'état des documents du projet
+        """
+        project = self.get_object()
+        documents = project.project_documents.all()
+        
+        status_summary = {
+            'total_documents': documents.count(),
+            'completed_documents': documents.filter(status='APPROVED').count(),
+            'in_progress_documents': documents.filter(status='IN_PROGRESS').count(),
+            'under_review_documents': documents.filter(status='UNDER_REVIEW').count(),
+            'not_started_documents': documents.filter(status='NOT_STARTED').count(),
+            'completion_percentage': project.get_completion_percentage(),
+            'documents_by_type': {}
+        }
+
+        for doc in documents:
+            doc_type = doc.document_type.get_type_display()
+            if doc_type not in status_summary['documents_by_type']:
+                status_summary['documents_by_type'][doc_type] = {
+                    'status': doc.get_status_display(),
+                    'last_updated': doc.updated_at
+                }
+
+        return Response(status_summary)
+
+    def destroy(self, request, *args, **kwargs):
+        """
+        Supprime un projet après vérification du statut administrateur et du mot de passe
+        """
+        # Vérifier si l'utilisateur est un administrateur
+        if not request.user.role == 'ADMIN':
+            raise PermissionDenied("Seuls les administrateurs peuvent supprimer des projets.")
+
+        # Récupérer le mot de passe fourni
+        admin_password = request.data.get('admin_password')
+        if not admin_password:
+            return Response(
+                {"message": "Le mot de passe administrateur est requis"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Vérifier le mot de passe
+        if not check_password(admin_password, request.user.password):
+            return Response(
+                {"message": "Mot de passe incorrect"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Récupérer l'instance du projet
+        instance = self.get_object()
+
+        # Vérifier si le projet peut être supprimé
+        if instance.project_documents.filter(status='UNDER_REVIEW').exists():
+            return Response(
+                {"message": "Impossible de supprimer un projet avec des documents en cours de relecture"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Effectuer une suppression douce
+        instance.soft_delete(request.user)
+
+        return Response(
+            {"message": "Projet supprimé avec succès"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 class TechnicalReportViewSet(viewsets.ModelViewSet):
     """

@@ -1,20 +1,29 @@
 /**
  * Service de gestion des projets
- * Gère toutes les opérations CRUD pour les projets
+ * Gère les appels API pour les opérations CRUD sur les projets
  */
 
 import api from './api';
+import { Project } from '../types/project';
 
-export interface Project {
-    id?: number;
-    name: string;
-    offer_delivery_date: string;
-    maitre_ouvrage: string;
-    maitre_oeuvre: string;
-    status: string;
+export interface ProjectStatistics {
+    total_documents: number;
+    completed_documents: number;
+    in_progress_documents: number;
+    documents_by_type: {
+        [key: string]: {
+            total: number;
+            completed: number;
+        };
+    };
 }
 
-export class ProjectService {
+export interface DeleteProjectResponse {
+    success: boolean;
+    message: string;
+}
+
+class ProjectService {
     static async getProjects(): Promise<Project[]> {
         const response = await api.get('/api/projects/');
         return response.data;
@@ -25,18 +34,30 @@ export class ProjectService {
         return response.data;
     }
 
-    static async createProject(project: Project): Promise<Project> {
-        const response = await api.post('/api/projects/', project);
+    static async createProject(projectData: Partial<Project>): Promise<Project> {
+        const response = await api.post('/api/projects/', projectData);
         return response.data;
     }
 
-    static async updateProject(id: number, project: Project): Promise<Project> {
-        const response = await api.put(`/api/projects/${id}/`, project);
+    static async updateProject(id: number, projectData: Partial<Project>): Promise<Project> {
+        const response = await api.put(`/api/projects/${id}/`, projectData);
         return response.data;
     }
 
-    static async deleteProject(id: number): Promise<void> {
-        await api.delete(`/api/projects/${id}/`);
+    static async deleteProject(id: number, password: string): Promise<void> {
+        await api.delete(`/api/projects/${id}/`, {
+            data: { admin_password: password }
+        });
+    }
+
+    static async getProjectStatistics(id: number): Promise<ProjectStatistics> {
+        const response = await api.get(`/api/projects/${id}/statistics/`);
+        return response.data;
+    }
+
+    static async getProjectDocumentsStatus(id: number): Promise<any> {
+        const response = await api.get(`/api/projects/${id}/documents_status/`);
+        return response.data;
     }
 
     static async addTeamMember(projectId: number, userId: number): Promise<void> {
@@ -47,8 +68,27 @@ export class ProjectService {
         await api.post(`/api/projects/${projectId}/remove_team_member/`, { user_id: userId });
     }
 
-    static async getProjectStatistics(projectId: number): Promise<any> {
-        const response = await api.get(`/api/projects/${projectId}/statistics/`);
+    static async addRequiredDocuments(projectId: number, documentIds: number[]): Promise<void> {
+        await api.post(`/api/projects/${projectId}/add_required_documents/`, {
+            document_type_ids: documentIds
+        });
+    }
+
+    static async searchProjects(query: string): Promise<Project[]> {
+        const response = await api.get('/api/projects/', {
+            params: { search: query }
+        });
+        return response.data;
+    }
+
+    static async filterProjects(filters: {
+        status?: string;
+        start_date?: string;
+        end_date?: string;
+        sort_by?: string;
+        sort_order?: 'asc' | 'desc';
+    }): Promise<Project[]> {
+        const response = await api.get('/api/projects/', { params: filters });
         return response.data;
     }
 }

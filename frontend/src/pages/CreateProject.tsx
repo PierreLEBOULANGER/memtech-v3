@@ -6,10 +6,12 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, TextField, Button, Card, CardContent, CardHeader, MenuItem, Grid, Autocomplete, Avatar } from '@mui/material';
+import { Box, Typography, TextField, Button, Card, CardContent, CardHeader, MenuItem, Grid, Autocomplete, Avatar, FormControlLabel, Checkbox, FormGroup, FormControl, FormLabel, Divider } from '@mui/material';
 import ProjectService from '../services/projectService';
 import MOAService, { MOA } from '../services/moaService';
 import MOEService, { MOE } from '../services/moeService';
+import DocumentTypeService, { DocumentType } from '../services/documentTypeService';
+import api from '../services/api';
 
 const CreateProject: React.FC = () => {
   const navigate = useNavigate();
@@ -17,8 +19,18 @@ const CreateProject: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [moas, setMOAs] = useState<MOA[]>([]);
   const [moes, setMOEs] = useState<MOE[]>([]);
+  const [documentTypes, setDocumentTypes] = useState<DocumentType[]>([]);
   const [selectedMOA, setSelectedMOA] = useState<MOA | null>(null);
   const [selectedMOE, setSelectedMOE] = useState<MOE | null>(null);
+  const [selectedDocuments, setSelectedDocuments] = useState<number[]>([]);
+  const [referenceDocuments, setReferenceDocuments] = useState<{
+    RC: File | null;
+    CCTP: File | null;
+  }>({
+    RC: null,
+    CCTP: null
+  });
+
   const [formData, setFormData] = useState({
     name: '',
     offer_delivery_date: '',
@@ -30,12 +42,14 @@ const CreateProject: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [moaData, moeData] = await Promise.all([
+        const [moaData, moeData, docTypeData] = await Promise.all([
           MOAService.getMOAs(),
-          MOEService.getMOEs()
+          MOEService.getMOEs(),
+          DocumentTypeService.getDocumentTypes()
         ]);
         setMOAs(moaData);
         setMOEs(moeData);
+        setDocumentTypes(docTypeData);
       } catch (error) {
         console.error('Erreur lors du chargement des données:', error);
       }
@@ -57,7 +71,7 @@ const CreateProject: React.FC = () => {
     if (newValue) {
       setFormData(prev => ({
         ...prev,
-        maitre_ouvrage: newValue.name
+        maitre_ouvrage: newValue.id
       }));
     }
   };
@@ -67,9 +81,26 @@ const CreateProject: React.FC = () => {
     if (newValue) {
       setFormData(prev => ({
         ...prev,
-        maitre_oeuvre: newValue.name
+        maitre_oeuvre: newValue.id
       }));
     }
+  };
+
+  const handleDocumentSelection = (docTypeId: number) => {
+    setSelectedDocuments(prev => {
+      if (prev.includes(docTypeId)) {
+        return prev.filter(id => id !== docTypeId);
+      } else {
+        return [...prev, docTypeId];
+      }
+    });
+  };
+
+  const handleFileUpload = (type: 'RC' | 'CCTP', file: File) => {
+    setReferenceDocuments(prev => ({
+      ...prev,
+      [type]: file
+    }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -78,10 +109,53 @@ const CreateProject: React.FC = () => {
     setError(null);
 
     try {
-      await ProjectService.createProject(formData);
+      // Vérifier que les champs requis sont remplis
+      if (!formData.name || !formData.offer_delivery_date || !selectedMOA || !selectedMOE) {
+        throw new Error("Veuillez remplir tous les champs obligatoires");
+      }
+
+      // Créer le projet
+      const project = await ProjectService.createProject({
+        ...formData,
+        maitre_ouvrage: selectedMOA.id,
+        maitre_oeuvre: selectedMOE.id
+      });
+
+      // Ajouter les documents requis
+      if (selectedDocuments.length > 0) {
+        await ProjectService.addRequiredDocuments(project.id, selectedDocuments);
+      }
+
+      // Uploader les documents de référence
+      if (referenceDocuments.RC) {
+        const rcFormData = new FormData();
+        rcFormData.append('file', referenceDocuments.RC);
+        rcFormData.append('type', 'RC');
+        const token = localStorage.getItem('access_token');
+        await api.post(`/api/projects/${project.id}/reference-documents/`, rcFormData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      }
+
+      if (referenceDocuments.CCTP) {
+        const cctpFormData = new FormData();
+        cctpFormData.append('file', referenceDocuments.CCTP);
+        cctpFormData.append('type', 'CCTP');
+        const token = localStorage.getItem('access_token');
+        await api.post(`/api/projects/${project.id}/reference-documents/`, cctpFormData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          }
+        });
+      }
+
+      // Rediriger vers la liste des projets
       navigate('/projects');
     } catch (err) {
-      setError("Erreur lors de la création du projet");
+      const errorMessage = err instanceof Error ? err.message : "Erreur lors de la création du projet";
+      setError(errorMessage);
       console.error('Erreur lors de la création du projet:', err);
     } finally {
       setLoading(false);
@@ -249,21 +323,79 @@ const CreateProject: React.FC = () => {
                 </Grid>
               )}
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  select
-                  label="Statut"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  required
-                >
-                  <MenuItem value="PENDING">En attente</MenuItem>
-                  <MenuItem value="IN_PROGRESS">En cours</MenuItem>
-                  <MenuItem value="COMPLETED">Terminé</MenuItem>
-                  <MenuItem value="CANCELLED">Annulé</MenuItem>
-                </TextField>
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <FormControl component="fieldset">
+                  <FormLabel component="legend">Documents requis pour ce projet</FormLabel>
+                  <FormGroup>
+                    {documentTypes.map((docType) => (
+                      <FormControlLabel
+                        key={docType.id}
+                        control={
+                          <Checkbox
+                            checked={selectedDocuments.includes(docType.id)}
+                            onChange={() => handleDocumentSelection(docType.id)}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Typography variant="body1">{docType.type}</Typography>
+                            <Typography variant="body2" color="textSecondary">
+                              {docType.description}
+                            </Typography>
+                          </Box>
+                        }
+                      />
+                    ))}
+                  </FormGroup>
+                </FormControl>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Divider sx={{ my: 2 }} />
+                <FormControl component="fieldset">
+                  <FormLabel component="legend">Documents de référence</FormLabel>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} sm={6}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                      >
+                        {referenceDocuments.RC ? referenceDocuments.RC.name : 'Télécharger le RC'}
+                        <input
+                          type="file"
+                          hidden
+                          accept=".pdf"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleFileUpload('RC', e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </Button>
+                    </Grid>
+                    <Grid item xs={12} sm={6}>
+                      <Button
+                        variant="outlined"
+                        component="label"
+                        fullWidth
+                      >
+                        {referenceDocuments.CCTP ? referenceDocuments.CCTP.name : 'Télécharger le CCTP'}
+                        <input
+                          type="file"
+                          hidden
+                          accept=".pdf"
+                          onChange={(e) => {
+                            if (e.target.files && e.target.files[0]) {
+                              handleFileUpload('CCTP', e.target.files[0]);
+                            }
+                          }}
+                        />
+                      </Button>
+                    </Grid>
+                  </Grid>
+                </FormControl>
               </Grid>
 
               <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
@@ -276,9 +408,11 @@ const CreateProject: React.FC = () => {
                 <Button
                   type="submit"
                   variant="contained"
+                  color="primary"
                   disabled={loading}
+                  fullWidth
                 >
-                  {loading ? 'Création...' : 'Créer le projet'}
+                  {loading ? "Création en cours..." : "Créer le projet"}
                 </Button>
               </Grid>
             </Grid>
