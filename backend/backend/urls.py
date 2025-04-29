@@ -14,12 +14,14 @@ from rest_framework_simplejwt.views import (
 )
 from users.views import CustomTokenObtainPairView, UserViewSet
 from moas.views import MOAViewSet, MOEViewSet
+from ai_analysis.api import DocumentAnalysisViewSet
 
 # Création du routeur pour l'API
 router = DefaultRouter()
 router.register(r'users', UserViewSet)
 router.register(r'moas', MOAViewSet, basename='moa')
 router.register(r'moes', MOEViewSet, basename='moe')
+router.register(r'analysis', DocumentAnalysisViewSet, basename='document-analysis')
 
 # URLs pour les projets
 urlpatterns = [
@@ -34,4 +36,6 @@ urlpatterns = [
     # URLs de l'API
     path('api/', include(router.urls)),
     path('api/', include('projects.urls')),  # Inclut toutes les routes de projets
+    path('api/', include('documents.urls')),  # Ajout des URLs des documents
+    path('api/', include('ai_analysis.urls')),  # Ajout des URLs d'analyse
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

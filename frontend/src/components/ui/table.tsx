@@ -1,10 +1,11 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
-
 /**
- * Composant Table
- * Un ensemble de composants pour créer des tableaux stylisés et accessibles
+ * table.tsx
+ * Composant de tableau pour l'interface utilisateur
+ * Fournit un tableau accessible et stylisé avec en-têtes et cellules
  */
+
+import * as React from "react"
+import { cn } from "../../lib/utils"
 
 const Table = React.forwardRef<
   HTMLTableElement,

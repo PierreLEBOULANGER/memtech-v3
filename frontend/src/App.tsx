@@ -19,6 +19,8 @@ import NotFound from './pages/NotFound';
 import Projects from './pages/Projects';
 import CreateProject from './pages/CreateProject';
 import RapportTechnique from './pages/RapportTechnique';
+import ProjectDocuments from './pages/ProjectDocuments';
+import MemoireTechniquePage from './pages/MemoireTechniquePage';
 
 // Configuration du client React Query
 const queryClient = new QueryClient({
@@ -44,7 +46,17 @@ const App: React.FC = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Routes protégées nécessitant une authentification */}
+            {/* Route spécifique pour le mémoire technique */}
+            <Route
+              path="/projects/:projectId/documents/:documentId/memoire-technique"
+              element={
+                <ProtectedRoute>
+                  <MemoireTechniquePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Routes protégées avec le layout par défaut */}
             <Route
               path="/"
               element={
@@ -57,6 +69,7 @@ const App: React.FC = () => {
               <Route path="dashboard" element={<Dashboard />} />
               <Route path="projects" element={<Projects />} />
               <Route path="projects/create" element={<CreateProject />} />
+              <Route path="projects/:id/documents" element={<ProjectDocuments />} />
               <Route path="rapport-technique" element={<RapportTechnique />} />
               <Route path="*" element={<NotFound />} />
             </Route>

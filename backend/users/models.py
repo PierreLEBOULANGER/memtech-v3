@@ -39,9 +39,8 @@ class User(AbstractUser):
     # Choix possibles pour le rôle de l'utilisateur
     ROLE_CHOICES = [
         ('ADMIN', 'Administrateur'),
-        ('MANAGER', 'Chef de projet'),
-        ('ENGINEER', 'Ingénieur'),
-        ('TECHNICIAN', 'Technicien'),
+        ('WRITER', 'Rédacteur'),
+        ('REVIEWER', 'Relecteur'),
     ]
     
     # Champs personnalisés

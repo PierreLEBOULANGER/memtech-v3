@@ -39,6 +39,23 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        """
+        Filtre les utilisateurs en fonction des paramètres de requête.
+        
+        Returns:
+            QuerySet: Les utilisateurs filtrés
+        """
+        queryset = User.objects.all()
+        role = self.request.query_params.get('role', None)
+        
+        if role:
+            # Gérer plusieurs rôles séparés par des virgules
+            roles = [r.strip() for r in role.split(',')]
+            queryset = queryset.filter(role__in=roles)
+            
+        return queryset
+
     def get_permissions(self):
         """
         Définit les permissions en fonction de l'action.

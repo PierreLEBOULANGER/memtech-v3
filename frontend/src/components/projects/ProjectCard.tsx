@@ -9,8 +9,29 @@ import { Link } from 'react-router-dom';
 import { useAuthContext } from '../../contexts/AuthContext';
 import DeleteProjectDialog from './DeleteProjectDialog';
 import ProjectService from '../../services/projectService';
+import DocumentService from '../../services/documentService';
 import { toast } from 'react-toastify';
 import { Project } from '../../types/project';
+import { Document, DocumentAssignment } from '../../types/document';
+import { User } from '../../types/user';
+import { Button } from '../../components/ui/button';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '../../components/ui/dialog';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '../../components/ui/select';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+// Ajout de la configuration de l'URL de l'API
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 interface ProjectCardProps {
   project: Project;
@@ -30,6 +51,41 @@ const getStatusColor = (status: string): string => {
 const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
   const { user } = useAuthContext();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [isRoleAssignmentOpen, setIsRoleAssignmentOpen] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Récupérer la liste des rédacteurs
+  const { data: writers } = useQuery<User[]>({
+    queryKey: ['users', 'WRITER'],
+    queryFn: async () => {
+      const response = await fetch('/api/users/?role=WRITER');
+      return response.json();
+    }
+  });
+
+  // Récupérer la liste des relecteurs
+  const { data: reviewers } = useQuery<User[]>({
+    queryKey: ['users', 'REVIEWER'],
+    queryFn: async () => {
+      const response = await fetch('/api/users/?role=REVIEWER');
+      return response.json();
+    }
+  });
+
+  // Mutation pour l'assignation des rôles
+  const assignRolesMutation = useMutation({
+    mutationFn: (assignment: DocumentAssignment) =>
+      DocumentService.assignRoles(project.id, selectedDocument!.id, assignment),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
+      toast.success('Rôles assignés avec succès');
+      setIsRoleAssignmentOpen(false);
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Erreur lors de l\'assignation des rôles');
+    }
+  });
 
   const handleDeleteClick = () => {
     setIsDeleteDialogOpen(true);
@@ -39,6 +95,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
     try {
       await ProjectService.deleteProject(project.id, password);
       toast.success('Le projet a été supprimé avec succès');
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
       if (onDelete) {
         onDelete();
       }
@@ -47,6 +104,21 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
       toast.error(errorMessage);
       throw new Error(errorMessage);
     }
+  };
+
+  const handleRoleAssignment = (doc: Document) => {
+    setSelectedDocument(doc);
+    setIsRoleAssignmentOpen(true);
+  };
+
+  const handleAssignRoles = (writerId: string, reviewerId: string) => {
+    if (!selectedDocument) return;
+
+    const assignment: DocumentAssignment = {};
+    if (writerId) assignment.writer_id = parseInt(writerId);
+    if (reviewerId) assignment.reviewer_id = parseInt(reviewerId);
+
+    assignRolesMutation.mutate(assignment);
   };
 
   return (
@@ -94,9 +166,20 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
                 <div className="flex items-center mb-2">
                   {project.maitre_ouvrage.logo && (
                     <img 
-                      src={project.maitre_ouvrage.logo} 
+                      src={`data:image/png;base64,${project.maitre_ouvrage.logo}`}
                       alt={project.maitre_ouvrage.name}
-                      className="w-8 h-8 rounded-full mr-2"
+                      className="w-8 h-8 rounded-full mr-2 object-cover object-center"
+                      style={{
+                        maxWidth: '32px',
+                        maxHeight: '32px',
+                        objectFit: 'cover',
+                        border: '1px solid rgba(255, 236, 0, 0.2)'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZWMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5MT0dPPC90ZXh0Pjwvc3ZnPg==';
+                      }}
                     />
                   )}
                   <div>
@@ -116,9 +199,20 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
                 <div className="flex items-center mb-2">
                   {project.maitre_oeuvre.logo && (
                     <img 
-                      src={project.maitre_oeuvre.logo} 
+                      src={`data:image/png;base64,${project.maitre_oeuvre.logo}`}
                       alt={project.maitre_oeuvre.name}
-                      className="w-8 h-8 rounded-full mr-2"
+                      className="w-8 h-8 rounded-full mr-2 object-cover object-center"
+                      style={{
+                        maxWidth: '32px',
+                        maxHeight: '32px',
+                        objectFit: 'cover',
+                        border: '1px solid rgba(255, 236, 0, 0.2)'
+                      }}
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZWMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5MT0dPPC90ZXh0Pjwvc3ZnPg==';
+                      }}
                     />
                   )}
                   <div>
@@ -133,24 +227,48 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
             )}
 
             {/* Documents requis */}
-            {project.required_documents && project.required_documents.length > 0 && (
+            {project.project_documents && project.project_documents.length > 0 && (
               <div className="bg-gray-800/50 rounded-lg p-3">
                 <h3 className="text-sm text-gray-300 mb-2">Documents requis</h3>
                 <div className="space-y-2">
-                  {project.required_documents.map((doc) => (
+                  {project.project_documents.map((doc) => (
                     <div key={doc.id} className="flex items-center justify-between">
                       <div>
-                        <div className="font-medium">{doc.type}</div>
-                        <div className="text-sm text-gray-400">{doc.description}</div>
+                        <div className="font-medium">{doc.document_type.type}</div>
+                        <div className="text-sm text-gray-400">{doc.document_type.description}</div>
+                        {/* Affichage des rôles */}
+                        <div className="mt-1 space-y-1">
+                          {doc.writer && (
+                            <div className="text-sm text-gray-300">
+                              Rédacteur: {doc.writer.first_name} {doc.writer.last_name}
+                            </div>
+                          )}
+                          {doc.reviewer && (
+                            <div className="text-sm text-gray-300">
+                              Relecteur: {doc.reviewer.first_name} {doc.reviewer.last_name}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      {doc.status && (
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          doc.status === 'COMPLETED' ? 'bg-green-500' :
-                          doc.status === 'IN_PROGRESS' ? 'bg-yellow-500' : 'bg-gray-500'
-                        }`}>
-                          {doc.status}
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end space-y-2">
+                        {doc.status && (
+                          <span className={`px-2 py-1 rounded text-xs ${
+                            doc.status === 'APPROVED' ? 'bg-green-500' :
+                            doc.status === 'IN_PROGRESS' ? 'bg-yellow-500' : 'bg-gray-500'
+                          }`}>
+                            {doc.status_display || doc.status}
+                          </span>
+                        )}
+                        {user?.role === 'ADMIN' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleRoleAssignment(doc as Document)}
+                          >
+                            Assigner les rôles
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -199,13 +317,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
           {/* Actions */}
           <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-700">
             <Link
-              to={`/projects/${project.id}`}
+              to={`/projects/${project.id}/documents`}
               className="inline-flex items-center text-[#ffec00] hover:text-[#ffec00]/80 transition-colors"
             >
-              <span>Voir les détails</span>
-              <svg className="ml-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
+              <span>Rédiger les documents</span>
             </Link>
             
             {user?.role === 'ADMIN' && (
@@ -221,6 +336,65 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
           </div>
         </div>
       </div>
+
+      {/* Dialog pour l'assignation des rôles */}
+      <Dialog open={isRoleAssignmentOpen} onOpenChange={setIsRoleAssignmentOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Assigner les rôles</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Rédacteur
+              </label>
+              <Select
+                value={selectedDocument?.writer?.id.toString()}
+                onValueChange={(value: string) => handleAssignRoles(value, selectedDocument?.reviewer?.id.toString() || '')}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un rédacteur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {writers?.map((writer: User) => (
+                    <SelectItem
+                      key={writer.id}
+                      value={writer.id.toString()}
+                    >
+                      {writer.first_name} {writer.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Relecteur
+              </label>
+              <Select
+                value={selectedDocument?.reviewer?.id.toString()}
+                onValueChange={(value: string) => handleAssignRoles(selectedDocument?.writer?.id.toString() || '', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un relecteur" />
+                </SelectTrigger>
+                <SelectContent>
+                  {reviewers?.map((reviewer: User) => (
+                    <SelectItem
+                      key={reviewer.id}
+                      value={reviewer.id.toString()}
+                    >
+                      {reviewer.first_name} {reviewer.last_name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <DeleteProjectDialog
         isOpen={isDeleteDialogOpen}

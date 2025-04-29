@@ -13,23 +13,25 @@ from django.db.models import Q
 from django.utils import timezone
 from .models import (
     Project, TechnicalReport, DocumentType,
-    ReferenceDocument, ProjectDocument
+    ReferenceDocument, ProjectDocument, DocumentComment
 )
 from .serializers import (
     ProjectListSerializer, ProjectDetailSerializer,
     TechnicalReportListSerializer, TechnicalReportDetailSerializer,
     DocumentTypeSerializer, ReferenceDocumentSerializer,
-    ProjectDocumentSerializer, ProjectDocumentDetailSerializer,
-    ProjectSerializer
+    ProjectDocumentSerializer, ProjectSerializer,
+    DocumentAssignmentSerializer, DocumentCommentSerializer
 )
 from .permissions import (
     IsProjectManagerOrReadOnly, IsProjectTeamMember,
-    CanManageReport, CanReviewReport
+    CanManageReport, CanReviewReport,
+    IsDocumentWriter, IsDocumentReviewer, CanManageDocument
 )
 from django.contrib.auth.models import User
 import logging
 from django.contrib.auth.hashers import check_password
 from django.core.exceptions import PermissionDenied
+from .middleware import DocumentPermissionMiddleware
 
 logger = logging.getLogger(__name__)
 
@@ -64,31 +66,49 @@ class ProjectDocumentViewSet(viewsets.ModelViewSet):
     ViewSet pour gérer les documents techniques du projet.
     """
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ProjectDocumentSerializer
 
     def get_queryset(self):
         return ProjectDocument.objects.filter(project_id=self.kwargs['project_pk'])
 
-    def get_serializer_class(self):
-        if self.action == 'retrieve':
-            return ProjectDocumentDetailSerializer
-        return ProjectDocumentSerializer
+    def get_permissions(self):
+        """
+        Définit les permissions en fonction de l'action.
+        """
+        if self.action in ['create', 'update', 'partial_update']:
+            permission_classes = [IsDocumentWriter]
+        elif self.action in ['assign_reviewers', 'change_status']:
+            permission_classes = [IsDocumentReviewer]
+        else:
+            permission_classes = [CanManageDocument]
+        return [permission() for permission in permission_classes]
 
     def perform_create(self, serializer):
         project = get_object_or_404(Project, pk=self.kwargs['project_pk'])
         serializer.save(
             project=project,
-            author=self.request.user
+            writer=self.request.user
         )
 
     @action(detail=True, methods=['post'])
-    def assign_reviewers(self, request, project_pk=None, pk=None):
+    def assign_roles(self, request, project_pk=None, pk=None):
         """
-        Assigne des relecteurs au document
+        Assigne les rôles (rédacteur et relecteur) au document
         """
         document = self.get_object()
-        reviewer_ids = request.data.get('reviewer_ids', [])
-        document.reviewers.set(reviewer_ids)
-        return Response({'status': 'reviewers assigned'})
+        serializer = DocumentAssignmentSerializer(data=request.data)
+        
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            
+        if 'writer_id' in serializer.validated_data:
+            document.writer_id = serializer.validated_data['writer_id']
+            
+        if 'reviewer_id' in serializer.validated_data:
+            document.reviewer_id = serializer.validated_data['reviewer_id']
+            
+        document.save()
+        return Response(self.get_serializer(document).data)
 
     @action(detail=True, methods=['post'])
     def change_status(self, request, project_pk=None, pk=None):
@@ -97,29 +117,120 @@ class ProjectDocumentViewSet(viewsets.ModelViewSet):
         """
         document = self.get_object()
         new_status = request.data.get('status')
+        
         if new_status not in dict(ProjectDocument.STATUS_CHOICES):
             return Response(
                 {'error': 'Invalid status'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        document.status = new_status
-        document.save()
-        serializer = self.get_serializer(document)
-        return Response(serializer.data)
+            
+        # Vérifier les permissions selon le nouveau statut
+        if new_status == 'REVIEW_1':
+            if not DocumentPermissionMiddleware.can_review_document(request.user, document):
+                return Response(
+                    {'error': 'Vous n\'avez pas la permission de mettre le document en relecture'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif new_status == 'APPROVED':
+            if not DocumentPermissionMiddleware.can_validate_document(request.user, document):
+                return Response(
+                    {'error': 'Vous n\'avez pas la permission de valider le document'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
+        document.update_status(new_status, request.user)
+        return Response(self.get_serializer(document).data)
+
+    @action(detail=True, methods=['post'])
+    def add_comment(self, request, project_pk=None, pk=None):
+        """
+        Ajoute un commentaire au document
+        """
+        document = self.get_object()
+        content = request.data.get('content')
+        requires_correction = request.data.get('requires_correction', False)
+        
+        if not content:
+            return Response(
+                {'error': 'Le contenu du commentaire est requis'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        document.add_comment(request.user, content, requires_correction)
+        return Response(self.get_serializer(document).data)
+
+    @action(detail=True, methods=['get'])
+    def history(self, request, project_pk=None, pk=None):
+        """
+        Retourne l'historique complet du document
+        """
+        document = self.get_object()
+        return Response({
+            'status_history': document.status_history,
+            'comments': document.comments
+        })
+
+class DocumentCommentViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet pour gérer les commentaires des documents
+    """
+    serializer_class = DocumentCommentSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return DocumentComment.objects.filter(
+            document_id=self.kwargs['document_pk']
+        )
+
+    def perform_create(self, serializer):
+        document = get_object_or_404(
+            ProjectDocument,
+            pk=self.kwargs['document_pk'],
+            project_id=self.kwargs['project_pk']
+        )
+        serializer.save(
+            document=document,
+            author=self.request.user
+        )
+
+    @action(detail=True, methods=['post'])
+    def resolve(self, request, project_pk=None, document_pk=None, pk=None):
+        """
+        Marque un commentaire comme résolu
+        """
+        comment = self.get_object()
+        comment.resolve()
+        return Response(self.get_serializer(comment).data)
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour la gestion des projets.
     Permet les opérations CRUD sur les projets et inclut des actions personnalisées.
     """
+    queryset = Project.objects.all()
     serializer_class = ProjectSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
-        Retourne le queryset des projets en excluant les projets supprimés.
+        Filtre les projets en fonction des permissions de l'utilisateur
+        et exclut les projets supprimés
         """
-        return Project.objects.filter(deleted_at__isnull=True)
+        user = self.request.user
+        base_queryset = Project.objects.filter(deleted_at__isnull=True)
+        
+        if user.role == 'ADMIN':
+            return base_queryset
+        elif user.role == 'PROJECT_MANAGER':
+            return base_queryset.filter(
+                Q(maitre_ouvrage__users=user) | 
+                Q(maitre_oeuvre__users=user)
+            )
+        else:
+            return base_queryset.filter(
+                Q(project_documents__writer=user) |
+                Q(project_documents__reviewer=user)
+            ).distinct()
 
     def perform_destroy(self, instance):
         """
@@ -243,6 +354,13 @@ class ProjectViewSet(viewsets.ModelViewSet):
             status=status.HTTP_204_NO_CONTENT
         )
 
+    def perform_create(self, serializer):
+        """
+        Crée un nouveau projet et met à jour son statut initial
+        """
+        project = serializer.save()
+        project.update_status()
+
 class TechnicalReportViewSet(viewsets.ModelViewSet):
     """
     ViewSet pour gérer les opérations CRUD sur les rapports techniques.
@@ -260,6 +378,7 @@ class TechnicalReportViewSet(viewsets.ModelViewSet):
     destroy:
         Supprime un rapport.
     """
+    queryset = TechnicalReport.objects.all()
     permission_classes = [permissions.IsAuthenticated, CanManageReport]
     
     def get_queryset(self):

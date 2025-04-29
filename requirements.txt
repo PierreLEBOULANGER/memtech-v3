@@ -33,4 +33,11 @@ WeasyPrint==60.1
 
 # Tâches asynchrones
 celery==5.3.6
-redis==5.0.1 
+redis==5.0.1
+
+# Analyse IA
+PyPDF2==3.0.1
+spacy==3.7.2
+transformers==4.36.2
+torch==2.1.2
+fr-core-news-lg @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_lg-3.7.0/fr_core_news_lg-3.7.0-py3-none-any.whl 

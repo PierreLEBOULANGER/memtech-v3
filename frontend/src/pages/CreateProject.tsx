@@ -6,12 +6,34 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, TextField, Button, Card, CardContent, CardHeader, MenuItem, Grid, Autocomplete, Avatar, FormControlLabel, Checkbox, FormGroup, FormControl, FormLabel, Divider } from '@mui/material';
+import { 
+  Box, 
+  Typography, 
+  TextField, 
+  Button, 
+  Card, 
+  CardContent, 
+  CardHeader,
+  MenuItem, 
+  Grid, 
+  Autocomplete, 
+  Avatar, 
+  FormControlLabel, 
+  Checkbox, 
+  FormGroup, 
+  FormControl, 
+  FormLabel, 
+  Divider,
+  Paper,
+  Container,
+  Alert
+} from '@mui/material';
 import ProjectService from '../services/projectService';
 import MOAService, { MOA } from '../services/moaService';
 import MOEService, { MOE } from '../services/moeService';
 import DocumentTypeService, { DocumentType } from '../services/documentTypeService';
 import api from '../services/api';
+import { CloudUpload as CloudUploadIcon } from '@mui/icons-material';
 
 const CreateProject: React.FC = () => {
   const navigate = useNavigate();
@@ -163,43 +185,127 @@ const CreateProject: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Card sx={{ maxWidth: 800, mx: 'auto' }}>
-        <CardHeader title="Créer un nouveau projet" />
-        <CardContent>
-          {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
-              {error}
-            </Typography>
-          )}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper elevation={0} sx={{ 
+        p: 3, 
+        backgroundColor: 'transparent',
+        backdropFilter: 'blur(8px)'
+      }}>
+        <Typography variant="h4" component="h1" gutterBottom sx={{ 
+          fontWeight: 600,
+          color: '#ffec00',
+          mb: 4 
+        }}>
+          Créer un nouveau projet
+        </Typography>
 
-          <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  label="Nom du projet"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </Grid>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Date de remise de l'offre"
-                  name="offer_delivery_date"
-                  type="date"
-                  value={formData.offer_delivery_date}
-                  onChange={handleChange}
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+        <form onSubmit={handleSubmit}>
+          <Grid container spacing={4}>
+            {/* Section Informations Générales */}
+            <Grid item xs={12}>
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                mb: 3, 
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(8px)',
+                color: 'white'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: '#ffec00',
+                  fontWeight: 500,
+                  mb: 3
+                }}>
+                  Informations Générales
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Nom du projet"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      required
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.3)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.5)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ffec00',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: 'white',
+                        },
+                      }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Date de remise de l'offre"
+                      name="offer_delivery_date"
+                      type="date"
+                      value={formData.offer_delivery_date}
+                      onChange={handleChange}
+                      required
+                      InputLabelProps={{ shrink: true }}
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.3)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.5)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ffec00',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: 'white',
+                        },
+                      }}
+                    />
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
 
-              <Grid item xs={12} sm={6}>
+            {/* Section Maîtrise d'Ouvrage */}
+            <Grid item xs={12} md={6}>
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                height: '100%',
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(8px)',
+                color: 'white'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: '#ffec00',
+                  fontWeight: 500,
+                  mb: 3
+                }}>
+                  Maître d'Ouvrage
+                </Typography>
                 <Autocomplete
                   options={moas}
                   getOptionLabel={(option) => option.name}
@@ -208,60 +314,100 @@ const CreateProject: React.FC = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Maître d'ouvrage"
+                      label="Sélectionner le maître d'ouvrage"
                       required
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.3)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.5)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ffec00',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: 'white',
+                        },
+                      }}
                     />
                   )}
                   renderOption={(props, option) => (
-                    <li {...props}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="li" {...props} sx={{ 
+                      '&:hover': { backgroundColor: 'rgba(255, 236, 0, 0.1)' },
+                      color: 'white',
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)'
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {option.logo && (
                           <Avatar
                             src={`data:image/png;base64,${option.logo}`}
                             alt={option.name}
-                            sx={{ width: 24, height: 24 }}
+                            sx={{ width: 40, height: 40 }}
                           />
                         )}
                         <Box>
-                          <Typography>{option.name}</Typography>
-                          <Typography variant="body2" color="textSecondary">
+                          <Typography variant="subtitle1" sx={{ color: 'white' }}>{option.name}</Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             {option.address}
                           </Typography>
                         </Box>
                       </Box>
-                    </li>
+                    </Box>
                   )}
                 />
-              </Grid>
-
-              {selectedMOA && (
-                <Grid item xs={12}>
-                  <Card sx={{ mt: 2, backgroundColor: '#f5f5f5' }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-                        {selectedMOA.logo && (
-                          <Avatar
-                            src={`data:image/png;base64,${selectedMOA.logo}`}
-                            alt={selectedMOA.name}
-                            sx={{ width: 100, height: 100 }}
-                            variant="rounded"
-                          />
-                        )}
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            {selectedMOA.name}
-                          </Typography>
-                          <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                            {selectedMOA.address}
-                          </Typography>
-                        </Box>
+                {selectedMOA && (
+                  <Box sx={{ 
+                    mt: 3, 
+                    p: 2, 
+                    backgroundColor: 'rgba(255, 236, 0, 0.1)', 
+                    borderRadius: 1 
+                  }}>
+                    <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+                      {selectedMOA.logo && (
+                        <Avatar
+                          src={`data:image/png;base64,${selectedMOA.logo}`}
+                          alt={selectedMOA.name}
+                          sx={{ width: 80, height: 80 }}
+                          variant="rounded"
+                        />
+                      )}
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#ffec00' }}>
+                          {selectedMOA.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 1 }}>
+                          {selectedMOA.address}
+                        </Typography>
                       </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
+                    </Box>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
 
-              <Grid item xs={12} sm={6}>
+            {/* Section Maîtrise d'Œuvre */}
+            <Grid item xs={12} md={6}>
+              <Paper elevation={2} sx={{ 
+                p: 3, 
+                height: '100%',
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(8px)',
+                color: 'white'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: '#ffec00',
+                  fontWeight: 500,
+                  mb: 3
+                }}>
+                  Maître d'Œuvre
+                </Typography>
                 <Autocomplete
                   options={moes}
                   getOptionLabel={(option) => option.name}
@@ -270,156 +416,292 @@ const CreateProject: React.FC = () => {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Maître d'œuvre"
+                      label="Sélectionner le maître d'œuvre"
                       required
+                      variant="outlined"
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          '& fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.3)',
+                          },
+                          '&:hover fieldset': {
+                            borderColor: 'rgba(255, 236, 0, 0.5)',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#ffec00',
+                          },
+                        },
+                        '& .MuiInputLabel-root': {
+                          color: 'rgba(255, 255, 255, 0.7)',
+                        },
+                        '& .MuiInputBase-input': {
+                          color: 'white',
+                        },
+                      }}
                     />
                   )}
                   renderOption={(props, option) => (
-                    <li {...props}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box component="li" {...props} sx={{ 
+                      '&:hover': { backgroundColor: 'rgba(255, 236, 0, 0.1)' },
+                      color: 'white',
+                      backgroundColor: 'rgba(0, 0, 0, 0.8)'
+                    }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         {option.logo && (
                           <Avatar
                             src={`data:image/png;base64,${option.logo}`}
                             alt={option.name}
-                            sx={{ width: 24, height: 24 }}
+                            sx={{ width: 40, height: 40 }}
                           />
                         )}
                         <Box>
-                          <Typography>{option.name}</Typography>
-                          <Typography variant="body2" color="textSecondary">
+                          <Typography variant="subtitle1" sx={{ color: 'white' }}>{option.name}</Typography>
+                          <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
                             {option.address}
                           </Typography>
                         </Box>
                       </Box>
-                    </li>
+                    </Box>
                   )}
                 />
-              </Grid>
-
-              {selectedMOE && (
-                <Grid item xs={12}>
-                  <Card sx={{ mt: 2, backgroundColor: '#f5f5f5' }}>
-                    <CardContent>
-                      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
-                        {selectedMOE.logo && (
-                          <Avatar
-                            src={`data:image/png;base64,${selectedMOE.logo}`}
-                            alt={selectedMOE.name}
-                            sx={{ width: 100, height: 100 }}
-                            variant="rounded"
-                          />
-                        )}
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            {selectedMOE.name}
-                          </Typography>
-                          <Typography variant="body1" sx={{ whiteSpace: 'pre-line' }}>
-                            {selectedMOE.address}
-                          </Typography>
-                        </Box>
+                {selectedMOE && (
+                  <Box sx={{ 
+                    mt: 3, 
+                    p: 2, 
+                    backgroundColor: 'rgba(255, 236, 0, 0.1)', 
+                    borderRadius: 1 
+                  }}>
+                    <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+                      {selectedMOE.logo && (
+                        <Avatar
+                          src={`data:image/png;base64,${selectedMOE.logo}`}
+                          alt={selectedMOE.name}
+                          sx={{ width: 80, height: 80 }}
+                          variant="rounded"
+                        />
+                      )}
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#ffec00' }}>
+                          {selectedMOE.name}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 1 }}>
+                          {selectedMOE.address}
+                        </Typography>
                       </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
+                    </Box>
+                  </Box>
+                )}
+              </Paper>
+            </Grid>
 
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <FormControl component="fieldset">
-                  <FormLabel component="legend">Documents requis pour ce projet</FormLabel>
-                  <FormGroup>
-                    {documentTypes.map((docType) => (
-                      <FormControlLabel
-                        key={docType.id}
-                        control={
-                          <Checkbox
-                            checked={selectedDocuments.includes(docType.id)}
-                            onChange={() => handleDocumentSelection(docType.id)}
-                          />
-                        }
-                        label={
-                          <Box>
-                            <Typography variant="body1">{docType.type}</Typography>
-                            <Typography variant="body2" color="textSecondary">
-                              {docType.description}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    ))}
-                  </FormGroup>
-                </FormControl>
-              </Grid>
-
-              <Grid item xs={12}>
-                <Divider sx={{ my: 2 }} />
-                <FormControl component="fieldset">
-                  <FormLabel component="legend">Documents de référence</FormLabel>
+            {/* Section Documents Requis */}
+            <Grid item xs={12}>
+              <Paper elevation={2} sx={{ 
+                p: 3,
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(8px)',
+                color: 'white'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: '#ffec00',
+                  fontWeight: 500,
+                  mb: 3
+                }}>
+                  Documents Requis
+                </Typography>
+                <FormControl component="fieldset" sx={{ width: '100%' }}>
                   <Grid container spacing={2}>
-                    <Grid item xs={12} sm={6}>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                      >
-                        {referenceDocuments.RC ? referenceDocuments.RC.name : 'Télécharger le RC'}
-                        <input
-                          type="file"
-                          hidden
-                          accept=".pdf"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleFileUpload('RC', e.target.files[0]);
+                    {documentTypes.map((docType) => (
+                      <Grid item xs={12} sm={6} md={4} key={docType.id}>
+                        <Paper 
+                          elevation={1} 
+                          sx={{ 
+                            p: 2,
+                            backgroundColor: selectedDocuments.includes(docType.id) 
+                              ? 'rgba(255, 236, 0, 0.2)' 
+                              : 'rgba(0, 0, 0, 0.3)',
+                            transition: 'background-color 0.3s',
+                            '&:hover': {
+                              backgroundColor: 'rgba(255, 236, 0, 0.1)'
                             }
                           }}
-                        />
-                      </Button>
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Button
-                        variant="outlined"
-                        component="label"
-                        fullWidth
-                      >
-                        {referenceDocuments.CCTP ? referenceDocuments.CCTP.name : 'Télécharger le CCTP'}
-                        <input
-                          type="file"
-                          hidden
-                          accept=".pdf"
-                          onChange={(e) => {
-                            if (e.target.files && e.target.files[0]) {
-                              handleFileUpload('CCTP', e.target.files[0]);
+                        >
+                          <FormControlLabel
+                            control={
+                              <Checkbox
+                                checked={selectedDocuments.includes(docType.id)}
+                                onChange={() => handleDocumentSelection(docType.id)}
+                                sx={{
+                                  color: 'rgba(255, 236, 0, 0.5)',
+                                  '&.Mui-checked': {
+                                    color: '#ffec00',
+                                  },
+                                }}
+                              />
                             }
-                          }}
-                        />
-                      </Button>
-                    </Grid>
+                            label={
+                              <Box>
+                                <Typography variant="subtitle2" sx={{ fontWeight: 600, color: '#ffec00' }}>
+                                  {docType.type}
+                                </Typography>
+                                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)', mt: 0.5 }}>
+                                  {docType.description}
+                                </Typography>
+                              </Box>
+                            }
+                            sx={{ width: '100%', m: 0 }}
+                          />
+                        </Paper>
+                      </Grid>
+                    ))}
                   </Grid>
                 </FormControl>
-              </Grid>
+              </Paper>
+            </Grid>
 
-              <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            {/* Section Documents de Référence */}
+            <Grid item xs={12}>
+              <Paper elevation={2} sx={{ 
+                p: 3,
+                bgcolor: 'rgba(0, 0, 0, 0.5)',
+                backdropFilter: 'blur(8px)',
+                color: 'white'
+              }}>
+                <Typography variant="h6" gutterBottom sx={{ 
+                  color: '#ffec00',
+                  fontWeight: 500,
+                  mb: 3
+                }}>
+                  Documents de Référence
+                </Typography>
+                <Grid container spacing={3}>
+                  <Grid item xs={12} sm={6}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={<CloudUploadIcon sx={{ color: '#ffec00' }} />}
+                      sx={{
+                        p: 2,
+                        border: '2px dashed',
+                        borderColor: 'rgba(255, 236, 0, 0.3)',
+                        color: '#ffec00',
+                        '&:hover': {
+                          borderColor: '#ffec00',
+                          backgroundColor: 'rgba(255, 236, 0, 0.1)'
+                        }
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ color: '#ffec00' }}>
+                          {referenceDocuments.RC ? referenceDocuments.RC.name : 'Télécharger le RC'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Format PDF uniquement
+                        </Typography>
+                      </Box>
+                      <input
+                        type="file"
+                        hidden
+                        accept=".pdf"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleFileUpload('RC', e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </Button>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Button
+                      variant="outlined"
+                      component="label"
+                      fullWidth
+                      startIcon={<CloudUploadIcon sx={{ color: '#ffec00' }} />}
+                      sx={{
+                        p: 2,
+                        border: '2px dashed',
+                        borderColor: 'rgba(255, 236, 0, 0.3)',
+                        color: '#ffec00',
+                        '&:hover': {
+                          borderColor: '#ffec00',
+                          backgroundColor: 'rgba(255, 236, 0, 0.1)'
+                        }
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ color: '#ffec00' }}>
+                          {referenceDocuments.CCTP ? referenceDocuments.CCTP.name : 'Télécharger le CCTP'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.7)' }}>
+                          Format PDF uniquement
+                        </Typography>
+                      </Box>
+                      <input
+                        type="file"
+                        hidden
+                        accept=".pdf"
+                        onChange={(e) => {
+                          if (e.target.files && e.target.files[0]) {
+                            handleFileUpload('CCTP', e.target.files[0]);
+                          }
+                        }}
+                      />
+                    </Button>
+                  </Grid>
+                </Grid>
+              </Paper>
+            </Grid>
+
+            {/* Boutons d'action */}
+            <Grid item xs={12}>
+              <Box sx={{ 
+                display: 'flex', 
+                justifyContent: 'flex-end', 
+                gap: 2,
+                mt: 2 
+              }}>
                 <Button
                   variant="outlined"
                   onClick={() => navigate('/projects')}
+                  sx={{ 
+                    px: 4,
+                    py: 1.5,
+                    color: '#ffec00',
+                    borderColor: 'rgba(255, 236, 0, 0.5)',
+                    '&:hover': {
+                      borderColor: '#ffec00',
+                      backgroundColor: 'rgba(255, 236, 0, 0.1)'
+                    }
+                  }}
                 >
                   Annuler
                 </Button>
                 <Button
                   type="submit"
                   variant="contained"
-                  color="primary"
                   disabled={loading}
-                  fullWidth
+                  sx={{ 
+                    px: 6,
+                    py: 1.5,
+                    backgroundColor: '#ffec00',
+                    color: 'black',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 236, 0, 0.8)'
+                    },
+                    '&:disabled': {
+                      backgroundColor: 'rgba(255, 236, 0, 0.3)'
+                    }
+                  }}
                 >
                   {loading ? "Création en cours..." : "Créer le projet"}
                 </Button>
-              </Grid>
+              </Box>
             </Grid>
-          </form>
-        </CardContent>
-      </Card>
-    </Box>
+          </Grid>
+        </form>
+      </Paper>
+    </Container>
   );
 };
 

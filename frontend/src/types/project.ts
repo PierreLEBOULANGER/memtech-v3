@@ -1,4 +1,5 @@
 import { User } from './user';
+import { Document } from './document';
 
 /**
  * Types pour la gestion des projets
@@ -37,14 +38,31 @@ export interface Project {
   name: string;
   status: string;
   status_display: string;
-  completion_percentage: number;
-  maitre_ouvrage: MOA;
-  maitre_oeuvre: MOE;
   offer_delivery_date: string;
-  required_documents: RequiredDocument[];
-  reference_documents: ReferenceDocument[];
-  documents_count?: number;
+  completion_percentage: number;
+  created_at: string;
+  updated_at: string;
   last_activity?: string;
+  maitre_ouvrage: {
+    id: number;
+    name: string;
+    address?: string;
+    logo?: string;
+  };
+  maitre_oeuvre: {
+    id: number;
+    name: string;
+    address?: string;
+    logo?: string;
+  };
+  project_documents: Document[];
+  reference_documents: {
+    id: number;
+    type: string;
+    type_display: string;
+    file_url: string;
+    name: string;
+  }[];
 }
 
 export interface CreateProjectData {

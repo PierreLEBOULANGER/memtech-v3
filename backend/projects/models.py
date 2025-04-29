@@ -157,6 +157,28 @@ class Project(models.Model):
         completed_docs = self.project_documents.filter(status='APPROVED').count()
         return (completed_docs / total_docs) * 100
 
+    def update_status(self):
+        """
+        Met à jour le statut du projet en fonction de l'état des documents
+        """
+        total_docs = self.project_documents.count()
+        
+        if total_docs == 0:
+            # Si aucun document n'est requis, le projet est considéré comme terminé
+            self.status = 'COMPLETED'
+        else:
+            completed_docs = self.project_documents.filter(status='APPROVED').count()
+            in_progress_docs = self.project_documents.filter(status__in=['DRAFT', 'REVIEW_1', 'CORRECTION', 'REVIEW_2', 'VALIDATION']).count()
+            
+            if completed_docs == total_docs:
+                self.status = 'COMPLETED'
+            elif in_progress_docs > 0:
+                self.status = 'IN_PROGRESS'
+            else:
+                self.status = 'PENDING'
+        
+        self.save()
+
     def soft_delete(self, user):
         """
         Effectue une suppression douce du projet et nettoie les fichiers associés
@@ -197,32 +219,51 @@ class ProjectDocument(models.Model):
     """
     Table de liaison entre Project et DocumentType avec statut et métadonnées
     """
+    # Choix pour le statut du document
+    STATUS_CHOICES = [
+        ('DRAFT', _('En rédaction')),
+        ('REVIEW_1', _('Première relecture')),
+        ('CORRECTION', _('En correction')),
+        ('REVIEW_2', _('Deuxième relecture')),
+        ('VALIDATION', _('En validation finale')),
+        ('APPROVED', _('Validé'))
+    ]
+
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='project_documents')
     document_type = models.ForeignKey(DocumentType, on_delete=models.PROTECT)
     status = models.CharField(
         _('Statut'),
         max_length=20,
-        choices=[
-            ('NOT_STARTED', _('Non commencé')),
-            ('IN_PROGRESS', _('En cours de rédaction')),
-            ('UNDER_REVIEW', _('En relecture')),
-            ('IN_CORRECTION', _('En correction')),
-            ('APPROVED', _('Validé')),
-        ],
-        default='NOT_STARTED'
+        choices=STATUS_CHOICES,
+        default='DRAFT'
     )
     content = models.TextField(_('Contenu'), blank=True)
-    author = models.ForeignKey(
+    
+    # Champs pour les rôles
+    writer = models.ForeignKey(
         User,
         on_delete=models.PROTECT,
-        related_name='authored_documents',
-        null=True
+        related_name='documents_to_write',
+        null=True,
+        verbose_name=_('Rédacteur')
     )
-    reviewers = models.ManyToManyField(
+    reviewer = models.ForeignKey(
         User,
+        on_delete=models.PROTECT,
         related_name='documents_to_review',
-        blank=True
+        null=True,
+        verbose_name=_('Relecteur')
     )
+    
+    # Champs pour le suivi
+    comments = models.JSONField(_('Commentaires'), default=list, blank=True)
+    status_history = models.JSONField(_('Historique des statuts'), default=list, blank=True)
+    completion_percentage = models.FloatField(_('Pourcentage de complétion'), default=0)
+    review_cycle = models.IntegerField(_('Cycle de relecture'), default=1)
+    needs_correction = models.BooleanField(_('Nécessite des corrections'), default=False)
+    last_notification_sent = models.DateTimeField(_('Dernière notification'), null=True, blank=True)
+    
+    # Champs de dates
     created_at = models.DateTimeField(_('Créé le'), auto_now_add=True)
     updated_at = models.DateTimeField(_('Mis à jour le'), auto_now=True)
 
@@ -233,6 +274,100 @@ class ProjectDocument(models.Model):
 
     def __str__(self):
         return f"{self.document_type.get_type_display()} - {self.project.name}"
+
+    def update_status(self, new_status, user):
+        """
+        Met à jour le statut du document et enregistre l'historique
+        """
+        old_status = self.status
+        self.status = new_status
+        
+        # Ajouter à l'historique
+        self.status_history.append({
+            'from_status': old_status,
+            'to_status': new_status,
+            'user': user.id,
+            'timestamp': timezone.now().isoformat()
+        })
+        
+        # Mettre à jour le pourcentage de complétion
+        self.update_completion_percentage()
+        
+        # Mettre à jour le statut du projet
+        self.project.update_status()
+        
+        self.save()
+
+    def update_completion_percentage(self):
+        """
+        Calcule et met à jour le pourcentage de complétion du document
+        """
+        status_weights = {
+            'DRAFT': 0.45,
+            'REVIEW_1': 0.30,
+            'CORRECTION': 0.20,
+            'REVIEW_2': 0,
+            'VALIDATION': 0.05,
+            'APPROVED': 1.0
+        }
+        
+        self.completion_percentage = status_weights.get(self.status, 0) * 100
+        self.save()
+
+    def add_comment(self, user, content, requires_correction=False):
+        """
+        Ajoute un commentaire au document
+        """
+        comment = {
+            'user': user.id,
+            'content': content,
+            'requires_correction': requires_correction,
+            'timestamp': timezone.now().isoformat(),
+            'resolved': False
+        }
+        
+        self.comments.append(comment)
+        if requires_correction:
+            self.needs_correction = True
+        
+        self.save()
+
+class DocumentComment(models.Model):
+    """
+    Modèle pour les commentaires sur les documents
+    """
+    document = models.ForeignKey(
+        ProjectDocument,
+        on_delete=models.CASCADE,
+        related_name='document_comments',
+        verbose_name=_('Document')
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.PROTECT,
+        related_name='document_comments',
+        verbose_name=_('Auteur')
+    )
+    content = models.TextField(_('Contenu'))
+    created_at = models.DateTimeField(_('Créé le'), auto_now_add=True)
+    review_cycle = models.IntegerField(_('Cycle de relecture'), default=1)
+    requires_correction = models.BooleanField(_('Nécessite des corrections'), default=False)
+    resolved = models.BooleanField(_('Résolu'), default=False)
+
+    class Meta:
+        verbose_name = _('commentaire de document')
+        verbose_name_plural = _('commentaires de document')
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Commentaire de {self.author.get_full_name()} sur {self.document}"
+
+    def resolve(self):
+        """
+        Marque le commentaire comme résolu
+        """
+        self.resolved = True
+        self.save()
 
 class TechnicalReport(models.Model):
     """

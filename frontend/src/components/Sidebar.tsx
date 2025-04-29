@@ -1,88 +1,93 @@
 /**
  * Sidebar.tsx
- * Composant de la barre latérale
- * Affiche le menu de navigation principal de l'application
+ * Composant de la barre latérale avec navigation
  */
 
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuthContext } from '../contexts/AuthContext';
+import { Button } from './ui/button';
+import {
+  LayoutDashboard,
+  FolderOpen,
+  FileText,
+  LogOut,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react';
 
-/**
- * Interface définissant la structure d'un élément du menu
- */
-interface MenuItem {
-  name: string;
-  path: string;
-  icon: JSX.Element;
+interface SidebarProps {
+  isCollapsed: boolean;
 }
 
-/**
- * Composant Sidebar
- * Gère l'affichage du menu latéral avec les différentes sections de l'application
- */
-const Sidebar: React.FC = () => {
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed }) => {
   const location = useLocation();
+  const { user, logout } = useAuthContext();
 
-  // Définition des éléments du menu
-  const menuItems: MenuItem[] = [
+  const menuItems = [
     {
-      name: 'Tableau de bord',
-      path: '/',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      ),
+      title: 'Tableau de bord',
+      icon: <LayoutDashboard className="h-5 w-5" />,
+      path: '/dashboard'
     },
     {
-      name: 'Projets',
-      path: '/projects',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-        </svg>
-      ),
+      title: 'Projets',
+      icon: <FolderOpen className="h-5 w-5" />,
+      path: '/projects'
     },
     {
-      name: 'Équipe',
-      path: '/team',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'Paramètres',
-      path: '/settings',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-        </svg>
-      ),
-    },
+      title: 'Rapports techniques',
+      icon: <FileText className="h-5 w-5" />,
+      path: '/rapport-technique'
+    }
   ];
 
   return (
-    <div className="h-full bg-gray-800 w-64 flex-shrink-0">
-      <div className="flex flex-col h-full">
-        <div className="space-y-3 py-4">
+    <div className="h-full bg-gray-50 border-r flex flex-col">
+      {/* Logo */}
+      <div className="p-4 border-b">
+        <img
+          src="/assets/Ecriture - Courant (001).png"
+          alt="TP Courant Logo"
+          className={`${isCollapsed ? 'w-8' : 'w-32'} transition-all duration-300`}
+        />
+      </div>
+
+      {/* Menu */}
+      <nav className="flex-1 p-4">
+        <ul className="space-y-2">
           {menuItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`flex items-center px-4 py-2 text-sm font-medium rounded-md ${
-                location.pathname === item.path
-                  ? 'bg-gray-900 text-white'
-                  : 'text-gray-300 hover:bg-gray-700 hover:text-white'
-              }`}
-            >
-              {item.icon}
-              <span className="ml-3">{item.name}</span>
-            </Link>
+            <li key={item.path}>
+              <Link
+                to={item.path}
+                className={`flex items-center p-2 rounded-lg transition-colors ${
+                  location.pathname === item.path
+                    ? 'bg-blue-100 text-blue-600'
+                    : 'hover:bg-gray-100'
+                }`}
+              >
+                {item.icon}
+                {!isCollapsed && (
+                  <span className="ml-3">{item.title}</span>
+                )}
+              </Link>
+            </li>
           ))}
-        </div>
+        </ul>
+      </nav>
+
+      {/* Déconnexion */}
+      <div className="p-4 border-t">
+        <Button
+          variant="ghost"
+          className="w-full justify-start"
+          onClick={logout}
+        >
+          <LogOut className="h-5 w-5" />
+          {!isCollapsed && (
+            <span className="ml-3">Déconnexion</span>
+          )}
+        </Button>
       </div>
     </div>
   );

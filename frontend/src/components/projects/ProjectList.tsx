@@ -22,6 +22,7 @@ import DeleteProjectDialog from './DeleteProjectDialog';
 import ProjectService from '../../services/projectService';
 import { toast } from 'react-toastify';
 import { Project } from '../../types/project';
+import { useQueryClient } from '@tanstack/react-query';
 
 const getStatusColor = (status: string): string => {
   const statusColors: { [key: string]: string } = {
@@ -38,30 +39,38 @@ const ProjectList: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [selectedProject, setSelectedProject] = React.useState<Project | null>(null);
 
+  // Ajout du log pour déboguer le rôle utilisateur
+  console.log('ProjectList - User role:', user?.role);
+
   const { data: projects, isLoading, error, refetch } = useQuery<Project[]>({
     queryKey: ['projects'],
     queryFn: ProjectService.getProjects,
   });
+
+  const queryClient = useQueryClient();
 
   const handleDeleteClick = (project: Project) => {
     setSelectedProject(project);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async (password: string) => {
-    if (!selectedProject) return;
-    
+  const handleDeleteProject = async (projectId: string, adminPassword: string) => {
     try {
-      await ProjectService.deleteProject(selectedProject.id, password);
-      toast.success('Le projet a été supprimé avec succès');
-      refetch();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Erreur lors de la suppression du projet';
-      toast.error(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setSelectedProject(null);
+        await ProjectService.deleteProject(projectId, adminPassword);
+        // Invalider le cache des projets pour forcer un rafraîchissement
+        queryClient.invalidateQueries({ queryKey: ['projects'] });
+        toast({
+            title: "Projet supprimé",
+            description: "Le projet a été supprimé avec succès.",
+            variant: "success",
+        });
+    } catch (error) {
+        console.error('Erreur lors de la suppression du projet:', error);
+        toast({
+            title: "Erreur",
+            description: "Une erreur est survenue lors de la suppression du projet.",
+            variant: "destructive",
+        });
     }
   };
 
@@ -119,47 +128,69 @@ const ProjectList: React.FC = () => {
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    {project.maitre_ouvrage.logo && (
+                    {project.maitre_ouvrage?.logo && (
                       <img
-                        src={project.maitre_ouvrage.logo}
+                        src={`data:image/png;base64,${project.maitre_ouvrage.logo}`}
                         alt={project.maitre_ouvrage.name}
-                        className="w-6 h-6 rounded-full mr-2"
+                        className="w-8 h-8 rounded-full mr-2 object-cover object-center"
+                        style={{
+                          maxWidth: '32px',
+                          maxHeight: '32px',
+                          objectFit: 'cover',
+                          border: '1px solid rgba(255, 236, 0, 0.2)'
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZWMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5MT0dPPC90ZXh0Pjwvc3ZnPg==';
+                        }}
                       />
                     )}
                     <div>
-                      <div className="font-medium">{project.maitre_ouvrage.name}</div>
+                      <div className="font-medium">{project.maitre_ouvrage?.name}</div>
                       <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {project.maitre_ouvrage.address}
+                        {project.maitre_ouvrage?.address}
                       </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center">
-                    {project.maitre_oeuvre.logo && (
+                    {project.maitre_oeuvre?.logo && (
                       <img
-                        src={project.maitre_oeuvre.logo}
+                        src={`data:image/png;base64,${project.maitre_oeuvre.logo}`}
                         alt={project.maitre_oeuvre.name}
-                        className="w-6 h-6 rounded-full mr-2"
+                        className="w-8 h-8 rounded-full mr-2 object-cover object-center"
+                        style={{
+                          maxWidth: '32px',
+                          maxHeight: '32px',
+                          objectFit: 'cover',
+                          border: '1px solid rgba(255, 236, 0, 0.2)'
+                        }}
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj48cmVjdCB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIGZpbGw9IiMzMzMiLz48dGV4dCB4PSI1MCUiIHk9IjUwJSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iI2ZmZWMwMCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0Ij5MT0dPPC90ZXh0Pjwvc3ZnPg==';
+                        }}
                       />
                     )}
                     <div>
-                      <div className="font-medium">{project.maitre_oeuvre.name}</div>
+                      <div className="font-medium">{project.maitre_oeuvre?.name}</div>
                       <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {project.maitre_oeuvre.address}
+                        {project.maitre_oeuvre?.address}
                       </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="space-y-1">
-                    {project.required_documents.map((doc) => (
+                    {project.project_documents.map((doc) => (
                       <div key={doc.id} className="flex items-center">
                         <span className={`w-2 h-2 rounded-full mr-2 ${
-                          doc.status === 'COMPLETED' ? 'bg-green-500' :
+                          doc.status === 'APPROVED' ? 'bg-green-500' :
                           doc.status === 'IN_PROGRESS' ? 'bg-yellow-500' : 'bg-gray-500'
                         }`} />
-                        <span className="text-sm">{doc.type}</span>
+                        <span className="text-sm">{doc.document_type.type}</span>
                       </div>
                     ))}
                   </div>
@@ -221,7 +252,7 @@ const ProjectList: React.FC = () => {
             setIsDeleteDialogOpen(false);
             setSelectedProject(null);
           }}
-          onConfirm={handleDeleteConfirm}
+          onConfirm={handleDeleteProject}
         />
       )}
     </Card>
