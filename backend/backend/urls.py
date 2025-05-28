@@ -36,6 +36,7 @@ urlpatterns = [
     # URLs de l'API
     path('api/', include(router.urls)),
     path('api/', include('projects.urls')),  # Inclut toutes les routes de projets
-    path('api/', include('documents.urls')),  # Ajout des URLs des documents
+    path('api/', include('documents.urls')),  # Correction ici : on inclut directement 'documents.urls' sous /api/
     path('api/', include('ai_analysis.urls')),  # Ajout des URLs d'analyse
+    path('api/', include('bibliotheque_mt.urls')),  # Ajout des URLs de la bibliothèque des MT
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT) 

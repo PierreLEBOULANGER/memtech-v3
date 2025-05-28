@@ -1,0 +1,19 @@
+INFO 2025-05-06 12:47:46,110 models 5036 14888 Traitement d'une photo: C:/Users/pleboulanger/Desktop/Memtech-V3/Photos_test/IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,111 models 5036 14888 Chemin original: C:\Users\pleboulanger\Desktop\Memtech-V3\Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,111 models 5036 14888 Chemin normalisé: C:\Users\pleboulanger\Desktop\Memtech-V3\Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,111 models 5036 14888 Chemin absolu détecté: C:\Users\pleboulanger\Desktop\Memtech-V3\Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,112 models 5036 14888 Chemin relatif généré: Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,112 models 5036 14888 Chemin nettoyé: Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,113 models 5036 14888 Fichier source trouvé: C:\Users\pleboulanger\Desktop\Memtech-V3\Photos_test\IMG_20250411_144406.jpg
+INFO 2025-05-06 12:47:46,134 models 5036 14888 Fichier lu, taille: 10539023 bytes
+INFO 2025-05-06 12:47:46,166 models 5036 14888 Type MIME détecté: image/jpeg
+INFO 2025-05-06 12:47:46,166 models 5036 14888 Nouveau chemin généré: bibliotheque\photos\2025\05\photo_20250506_124746.jpg
+INFO 2025-05-06 12:47:46,173 models 5036 14888 Fichier sauvegardé: bibliotheque/photos/2025/05/photo_20250506_124746.jpg
+INFO 2025-05-06 12:48:30,188 models 5036 14888 Traitement d'une photo: bibliotheque/photos/2025/05/photo_20250506_124746.jpg
+INFO 2025-05-06 12:48:30,188 models 5036 14888 Chemin original: bibliotheque\photos\2025\05\photo_20250506_124746.jpg
+ERROR 2025-05-06 12:48:30,188 models 5036 14888 Le chemin n'existe pas: bibliotheque\photos\2025\05\photo_20250506_124746.jpg
+INFO 2025-05-06 12:48:30,188 models 5036 14888 Chemin nettoyé: None
+INFO 2025-05-06 12:49:21,287 models 5036 14888 Traitement d'une photo: bibliotheque/photos/2025/05/photo_20250506_124746.jpg
+INFO 2025-05-06 12:49:21,287 models 5036 14888 Chemin original: bibliotheque\photos\2025\05\photo_20250506_124746.jpg
+ERROR 2025-05-06 12:49:21,287 models 5036 14888 Le chemin n'existe pas: bibliotheque\photos\2025\05\photo_20250506_124746.jpg
+INFO 2025-05-06 12:49:21,288 models 5036 14888 Chemin nettoyé: None

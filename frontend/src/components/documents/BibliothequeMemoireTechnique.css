@@ -1,0 +1,28 @@
+/* Styles pour le drag & drop */
+.dragging {
+  opacity: 0.5;
+  background-color: #f3f4f6;
+}
+
+.drag-preview {
+  position: absolute;
+  top: -1000px;
+  padding: 8px 16px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Style pour indiquer que l'élément est draggable */
+.cursor-move {
+  cursor: move;
+}
+
+/* Style pour l'élément pendant le drag */
+.cursor-move:hover {
+  background-color: #f3f4f6;
+} 

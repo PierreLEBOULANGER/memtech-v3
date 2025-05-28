@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { Card, CardContent, CardHeader } from "../components/ui/card";
 import { Button } from "../components/ui/button";
@@ -29,6 +29,7 @@ import { User } from "../types/user";
 import { useAuthContext } from "../contexts/AuthContext";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../services/api";
+import axios from "axios";
 
 const ProjectDocuments = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,6 +39,7 @@ const ProjectDocuments = () => {
   const [isRoleAssignmentOpen, setIsRoleAssignmentOpen] = useState(false);
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Récupérer la liste des rédacteurs
   const { data: writers } = useQuery<User[]>({
@@ -129,6 +131,27 @@ const ProjectDocuments = () => {
     assignRolesMutation.mutate(assignment);
   };
 
+  // Fonction pour créer ou récupérer le document mémoire technique et rediriger
+  const handleRedigerMemoireTechnique = async (projectId: number) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const response = await axios.post(
+        '/api/documents/create_memoire_technique/',
+        { project_id: projectId },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        }
+      );
+      const documentId = response.data.document_id;
+      // Rediriger vers la page d'édition du mémoire technique
+      navigate(`/projects/${projectId}/documents/${documentId}/memoire-technique`);
+    } catch (error: any) {
+      toast.error("Erreur lors de la création du document mémoire technique : " + (error?.response?.data?.error || error.message));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -204,12 +227,14 @@ const ProjectDocuments = () => {
 
                     <div className="mt-4 flex justify-between items-center">
                       {document.document_type.type === 'MEMO_TECHNIQUE' && (
-                        <Link
-                          to={`/projects/${project.id}/documents/${document.id}/memoire-technique`}
-                          className="text-[#ffec00] hover:text-[#ffec00]/80 text-sm font-medium"
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-[#ffec00] border-[#ffec00] hover:bg-[#ffec00]/10"
+                          onClick={() => handleRedigerMemoireTechnique(project.id)}
                         >
-                          Rédiger le document →
-                        </Link>
+                          Rédiger le document
+                        </Button>
                       )}
                       
                       {(user?.role === 'ADMIN' || user?.role === 'PROJECT_MANAGER') && (

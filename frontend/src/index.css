@@ -20,3 +20,250 @@
     @apply min-h-screen;
   }
 }
+
+/* Styles pour l'éditeur Tiptap */
+.tiptap-editor-container {
+  position: relative;
+}
+
+.tiptap-toolbar {
+  background-color: #f8f9fa;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 8px;
+  margin-bottom: 16px;
+}
+
+.toolbar-group {
+  display: inline-flex;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid #e2e8f0;
+}
+
+.toolbar-group:last-child {
+  border-right: none;
+}
+
+.toolbar-group button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  color: #4a5568;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toolbar-group button:hover {
+  background-color: #edf2f7;
+}
+
+.toolbar-group button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar-group button.active {
+  background-color: #e2e8f0;
+  color: #2d3748;
+}
+
+/* Styles pour les tableaux */
+.tiptap-table {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.tiptap-table td,
+.tiptap-table th {
+  border: 1px solid #e2e8f0;
+  padding: 8px;
+  position: relative;
+}
+
+.tiptap-table th {
+  background-color: #f8f9fa;
+  font-weight: bold;
+}
+
+/* Styles pour les liens */
+.tiptap-link {
+  color: #3182ce;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tiptap-link:hover {
+  color: #2c5282;
+}
+
+/* Styles pour les images */
+.tiptap-image {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1em auto;
+}
+
+.tiptap-image.ProseMirror-selectednode {
+  outline: 2px solid #3182ce;
+}
+
+/* Styles pour les citations */
+.ProseMirror blockquote {
+  border-left: 4px solid #e2e8f0;
+  margin: 1em 0;
+  padding-left: 1em;
+  color: #4a5568;
+}
+
+/* Styles pour le code */
+.ProseMirror code {
+  background-color: #f8f9fa;
+  padding: 0.2em 0.4em;
+  border-radius: 4px;
+  font-family: monospace;
+}
+
+.ProseMirror pre {
+  background-color: #f8f9fa;
+  padding: 1em;
+  border-radius: 4px;
+  overflow-x: auto;
+}
+
+.ProseMirror pre code {
+  background-color: transparent;
+  padding: 0;
+}
+
+/* Styles pour le surlignage */
+.ProseMirror mark {
+  background-color: #fefcbf;
+  padding: 0.2em 0;
+}
+
+/* Styles pour les listes */
+.ProseMirror ul,
+.ProseMirror ol {
+  padding-left: 1.5em;
+  margin: 1em 0;
+}
+
+.ProseMirror li {
+  margin: 0.5em 0;
+}
+
+/* Styles pour le placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
+
+/* Styles pour les modales */
+.link-modal,
+.color-picker {
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  position: absolute;
+  z-index: 50;
+}
+
+.link-modal input {
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  padding: 4px 8px;
+  margin-right: 8px;
+}
+
+.link-modal button,
+.color-picker button {
+  padding: 4px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  background-color: white;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.link-modal button:hover,
+.color-picker button:hover {
+  background-color: #edf2f7;
+}
+
+/* Styles pour les couleurs de texte */
+.ProseMirror .text-red { color: #FF0000; }
+.ProseMirror .text-green { color: #00FF00; }
+.ProseMirror .text-blue { color: #0000FF; }
+.ProseMirror .text-yellow { color: #FFFF00; }
+.ProseMirror .text-magenta { color: #FF00FF; }
+.ProseMirror .text-cyan { color: #00FFFF; }
+
+/*
+ * Styles pour la visualisation de pages A4/A3 dans l'éditeur Tiptap
+ * Utilité : Permet d'afficher le contenu de l'éditeur dans des blocs simulant des feuilles A4 ou A3, en portrait ou paysage.
+ * Chaque page est centrée, avec ombre et marges, pour un rendu proche de Word.
+ */
+
+.tiptap-page {
+  background: white;
+  margin: 24px auto;
+  box-shadow: 0 4px 16px #0002;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+/* A4 portrait : 210mm x 297mm */
+.tiptap-page.a4.portrait {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 32mm 25mm 32mm 25mm;
+}
+
+/* A4 paysage : 297mm x 210mm */
+.tiptap-page.a4.paysage {
+  width: 297mm;
+  min-height: 210mm;
+  padding: 25mm 32mm 25mm 32mm;
+}
+
+/* A3 portrait : 297mm x 420mm */
+.tiptap-page.a3.portrait {
+  width: 297mm;
+  min-height: 420mm;
+  padding: 32mm 25mm 32mm 25mm;
+}
+
+/* A3 paysage : 420mm x 297mm */
+.tiptap-page.a3.paysage {
+  width: 420mm;
+  min-height: 297mm;
+  padding: 25mm 32mm 25mm 32mm;
+}
+
+/* Pour éviter le scroll horizontal sur petits écrans */
+@media (max-width: 900px) {
+  .tiptap-page {
+    width: 100vw !important;
+    min-width: unset !important;
+    padding: 8vw 2vw !important;
+  }
+}

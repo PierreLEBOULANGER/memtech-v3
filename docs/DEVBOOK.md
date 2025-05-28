@@ -1,4 +1,6 @@
 # DEVBOOK - Application de Rédaction de Mémoires Techniques
+#
+# Ce document sert de carnet de bord technique pour le projet Memtech. Il détaille l'architecture, les choix techniques, le plan de développement, l'état d'avancement, les problèmes rencontrés et les prochaines étapes. Il est mis à jour à chaque évolution majeure du projet.
 
 ## Table des matières
 1. [Questions et clarifications](#questions-et-clarifications)
@@ -84,6 +86,28 @@ Points clarifiés :
 - Gestion des fichiers avec Django File Storage
 
 ## État actuel du développement
+
+### Mise à jour du 01/05/2024
+
+#### Fonctionnalités IA et corrections majeures
+1. **Fonctionnalité IA : Analyse automatique du RC**
+   - Ajout d'un service backend d'analyse PDF (extraction de texte, détection de sections, sommaire automatique)
+   - Intégration d'un service IA (prévu pour enrichissement futur)
+   - API dédiée à l'analyse du RC et à la génération de sommaire
+   - Nettoyage de la base de données et correction des migrations
+   - Intégration frontend : bouton d'analyse, affichage du chargement, insertion automatique du sommaire dans l'éditeur
+
+2. **Corrections techniques**
+   - Correction du typage ProseMirror (initialContent → content)
+   - Correction de l'initialisation du contenu pour éviter les nœuds vides
+   - Nettoyage de la base SQLite (suppression des tables orphelines)
+   - Amélioration de la gestion des erreurs réseau et migrations
+
+#### Prochaines étapes prioritaires
+- Finalisation de l'intégration IA (amélioration de l'analyse, enrichissement du sommaire)
+- Tests utilisateurs sur la génération automatique du sommaire
+- Documentation API et guides utilisateurs
+- Optimisation des performances (backend et frontend)
 
 ### Mise à jour du 21/04/2024
 
@@ -249,4 +273,5 @@ Points clarifiés :
 1. Erreur 431 sur certaines requêtes HMR (Headers too large)
 2. Optimisation nécessaire des requêtes API
 3. Gestion de la mémoire à améliorer
-4. Documentation API à compléter 
+4. Documentation API à compléter
+5. **Nouveau** : Robustesse de l'analyse IA à améliorer (qualité extraction texte, adaptation aux différents formats de RC) 

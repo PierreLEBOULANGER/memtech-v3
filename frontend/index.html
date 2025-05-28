@@ -1,3 +1,10 @@
+<!--
+  frontend/index.html
+  Fichier principal HTML de l'application React.
+  Ce fichier charge le script DocsAPI.js via le reverse proxy Nginx (/onlyoffice/...),
+  ce qui permet d'éviter tout problème de CORS et d'intégrer OnlyOffice proprement dans l'application.
+  Le reverse proxy Nginx doit être configuré pour rediriger /onlyoffice/ vers le serveur Docker OnlyOffice.
+-->
 <!DOCTYPE html>
 <html lang="fr">
   <head>
@@ -5,6 +12,13 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MemTech</title>
+    <!-- Script OnlyOffice - via reverse proxy Nginx -->
+    <script 
+      src="/onlyoffice/web-apps/apps/api/documents/api.js" 
+      crossorigin="anonymous"
+      referrerpolicy="origin"
+      onload="window.onDocsApiLoaded && window.onDocsApiLoaded()"
+    ></script>
   </head>
   <body>
     <div id="root"></div>

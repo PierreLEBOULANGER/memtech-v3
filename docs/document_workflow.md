@@ -1,7 +1,24 @@
 # Workflow de Documents - Plan de Développement
+#
+# Ce document décrit le workflow de gestion documentaire, les étapes de validation, les rôles, et le plan de développement associé. Il est mis à jour à chaque évolution majeure du projet.
 
 ## Vue d'ensemble
 Ce document détaille l'implémentation du workflow de gestion des documents dans l'application Memtech. Le système permet de suivre la progression des documents à travers différentes étapes, avec des rôles spécifiques pour la rédaction et la relecture.
+
+## Dernières évolutions (01/05/2024)
+- **Ajout d'une fonctionnalité IA d'analyse automatique du RC** :
+  - Service backend d'analyse PDF (extraction de texte, détection de sections, sommaire automatique)
+  - API dédiée et intégration frontend (bouton d'analyse, insertion du sommaire)
+  - Nettoyage de la base de données et correction des migrations
+- **Corrections techniques** :
+  - Correction du typage ProseMirror et initialisation du contenu
+  - Nettoyage de la base SQLite (suppression des tables orphelines)
+  - Amélioration de la gestion des erreurs réseau et migrations
+- **Prochaines étapes** :
+  - Amélioration de la robustesse de l'analyse IA
+  - Tests utilisateurs sur la génération automatique du sommaire
+  - Documentation API et guides utilisateurs
+  - Optimisation des performances
 
 ## Workflow et Pondération
 1. **Rédaction** (45%)
@@ -356,7 +373,7 @@ interface DocumentNotification {
 ## Suivi des Modifications
 | Date | Description | Status |
 |------|-------------|--------|
-| | | | 
+| 01/05/2024 | Ajout de la fonctionnalité IA d'analyse du RC, corrections techniques, nettoyage base, intégration frontend | En cours |
 
 ## Développements Ultérieurs Possibles
 

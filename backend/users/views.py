@@ -37,7 +37,7 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # Sécurité rétablie : accès réservé aux utilisateurs authentifiés
 
     def get_queryset(self):
         """

@@ -1,6 +1,26 @@
 # Interface de Rédaction des Mémoires Techniques
+#
+# Ce document décrit l'état d'avancement, la structure, les fonctionnalités et le plan de développement de l'éditeur de mémoires techniques. Il est mis à jour à chaque évolution majeure du projet.
 
 ## État Actuel du Développement
+
+### Mise à jour du 01/05/2024
+
+#### Fonctionnalités IA et corrections majeures
+1. **Fonctionnalité IA : Analyse automatique du RC**
+   - Service backend d'analyse PDF (extraction de texte, détection de sections, sommaire automatique)
+   - API dédiée et intégration frontend (bouton d'analyse, insertion du sommaire)
+   - Nettoyage de la base de données et correction des migrations
+2. **Corrections techniques**
+   - Correction du typage ProseMirror et initialisation du contenu
+   - Nettoyage de la base SQLite (suppression des tables orphelines)
+   - Amélioration de la gestion des erreurs réseau et migrations
+
+#### Prochaines étapes prioritaires
+- Amélioration de la robustesse de l'analyse IA (qualité extraction texte, adaptation aux différents formats de RC)
+- Tests utilisateurs sur la génération automatique du sommaire
+- Documentation API et guides utilisateurs
+- Optimisation des performances (backend et frontend)
 
 ### 1. Composants Implémentés
 
@@ -519,83 +539,67 @@ Organisée en sections :
 
 ### 10. Analyse IA du Règlement de Consultation
 
+# Cette section décrit la fonctionnalité IA d'analyse automatique du RC, ajoutée récemment.
+
 #### Phase 1 : Infrastructure (Sprint 13-14)
 1. **Backend**
-   - Création d'un service d'analyse de documents PDF
-   - Intégration d'un modèle d'IA pour l'analyse de texte
-   - Mise en place d'un système de cache pour les analyses
-   - API pour l'analyse et la récupération des résultats
+   - Création d'un service d'analyse de documents PDF (implémenté)
+   - Intégration d'un modèle d'IA pour l'analyse de texte (enrichissement futur)
+   - Mise en place d'un système de cache pour les analyses (à faire)
+   - API pour l'analyse et la récupération des résultats (implémenté)
 
 2. **Frontend**
-   - Ajout du bouton d'analyse dans l'interface
-   - Composant de chargement pendant l'analyse
-   - Affichage des résultats d'analyse
-   - Interface de validation des résultats
+   - Ajout du bouton d'analyse dans l'interface (implémenté)
+   - Composant de chargement pendant l'analyse (implémenté)
+   - Affichage des résultats d'analyse (implémenté)
+   - Interface de validation des résultats (à faire)
 
 #### Phase 2 : Analyse du Document (Sprint 15-16)
 1. **Traitement du PDF**
-   - Extraction du texte du RC
-   - Nettoyage et formatage du texte
-   - Identification des sections et sous-sections
-   - Détection des exigences spécifiques
+   - Extraction du texte du RC (implémenté)
+   - Nettoyage et formatage du texte (implémenté)
+   - Identification des sections et sous-sections (implémenté)
+   - Détection des exigences spécifiques (à améliorer)
 
 2. **Analyse IA**
-   - Classification des sections
-   - Identification des chapitres obligatoires
-   - Détection des sous-chapitres
-   - Extraction des mots-clés importants
+   - Classification des sections (à enrichir)
+   - Identification des chapitres obligatoires (à enrichir)
+   - Détection des sous-chapitres (à enrichir)
+   - Extraction des mots-clés importants (à enrichir)
 
 #### Phase 3 : Génération du Sommaire (Sprint 17-18)
 1. **Structure du Sommaire**
-   - Création du template de base
-   - Intégration des chapitres identifiés
-   - Organisation hiérarchique
-   - Numérotation automatique
+   - Création du template de base (implémenté)
+   - Intégration des chapitres identifiés (implémenté)
+   - Organisation hiérarchique (implémenté)
+   - Numérotation automatique (implémenté)
 
 2. **Personnalisation**
-   - Options de personnalisation du sommaire
-   - Ajout/suppression de sections
-   - Réorganisation des chapitres
-   - Sauvegarde des préférences
+   - Options de personnalisation du sommaire (à faire)
+   - Ajout/suppression de sections (à faire)
+   - Réorganisation des chapitres (à faire)
+   - Sauvegarde des préférences (à faire)
 
 #### Phase 4 : Intégration et Tests (Sprint 19-20)
 1. **Tests**
-   - Tests unitaires
-   - Tests d'intégration
-   - Tests de performance
-   - Tests utilisateurs
+   - Tests unitaires (à faire)
+   - Tests d'intégration (à faire)
+   - Tests de performance (à faire)
+   - Tests utilisateurs (à faire)
 
 2. **Documentation**
-   - Guide d'utilisation
-   - Documentation technique
-   - Procédures de maintenance
-   - Formation des utilisateurs
+   - Guide d'utilisation (à faire)
+   - Documentation technique (à faire)
+   - Procédures de maintenance (à faire)
+   - Formation des utilisateurs (à faire)
 
-#### Estimation des Ressources
-1. **Équipe Nécessaire**
-   - 1 Data Scientist
-   - 1 Développeur Backend
-   - 1 Développeur Frontend
-   - 1 Testeur
+#### Risques identifiés (mise à jour)
+- Qualité de l'extraction du texte PDF (en cours d'amélioration)
+- Précision de l'analyse IA (enrichissement futur)
+- Performance avec documents volumineux (à surveiller)
+- Adaptation aux différents formats de RC (en cours)
 
-2. **Timeline**
-   - Durée totale : 4 mois (8 sprints)
-   - Sprints de 2 semaines
-   - Points de revue à chaque fin de phase
-
-3. **Livrables par Phase**
-   - Phase 1 : Infrastructure fonctionnelle
-   - Phase 2 : Système d'analyse opérationnel
-   - Phase 3 : Générateur de sommaire
-   - Phase 4 : Version finale testée
-
-4. **Risques Identifiés**
-   - Qualité de l'extraction du texte PDF
-   - Précision de l'analyse IA
-   - Performance avec documents volumineux
-   - Adaptation aux différents formats de RC
-
-5. **Métriques de Succès**
+#### Métriques de Succès
    - Précision de l'analyse > 90%
    - Temps d'analyse < 30 secondes
    - Taux de satisfaction utilisateur > 80%

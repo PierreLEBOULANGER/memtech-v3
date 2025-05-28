@@ -1,7 +1,25 @@
 # Interface d'Édition de Documents - Spécifications
+#
+# Ce document décrit les spécifications fonctionnelles et techniques de l'interface d'édition, la gestion des bibliothèques, l'intégration de l'analyse IA du RC, et le workflow utilisateur. Il est mis à jour à chaque évolution majeure du projet.
 
 ## Objectif Principal
 Créer une interface d'édition de documents permettant de gagner du temps en réutilisant des éléments préexistants et en automatisant l'analyse des documents de référence.
+
+## Dernières évolutions (01/05/2024)
+- **Ajout d'une fonctionnalité IA d'analyse automatique du RC** :
+  - Upload du RC en PDF, analyse automatique, génération de sommaire, suggestions d'éléments pertinents
+  - Intégration backend et frontend (bouton d'analyse, insertion du sommaire)
+- **Gestion des bibliothèques spécifiques** :
+  - Organisation par type de document, catégories enrichies, accès rapide
+- **Corrections techniques** :
+  - Correction du typage ProseMirror et initialisation du contenu
+  - Nettoyage de la base SQLite (suppression des tables orphelines)
+  - Amélioration de la gestion des erreurs réseau et migrations
+- **Prochaines étapes** :
+  - Amélioration de la robustesse de l'analyse IA
+  - Tests utilisateurs sur la génération automatique du sommaire
+  - Documentation utilisateur et guides API
+  - Optimisation des performances
 
 ## Structure de l'Interface
 
@@ -144,11 +162,11 @@ Structure dans `memos.db` :
 7. Validation et export
 
 ## Priorités de Développement
-1. Interface frontend de base
-2. Système de bibliothèques spécifiques
-3. Intégration de l'éditeur
-4. Système d'analyse du RC
-5. Fonctionnalités avancées
+1. Interface frontend de base (implémentée)
+2. Système de bibliothèques spécifiques (en cours d'amélioration)
+3. Intégration de l'éditeur (implémentée)
+4. Système d'analyse du RC (implémenté, à enrichir)
+5. Fonctionnalités avancées (à venir)
 
 ## Points d'Attention
 - Performance de l'interface

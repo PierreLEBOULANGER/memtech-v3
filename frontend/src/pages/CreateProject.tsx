@@ -56,8 +56,8 @@ const CreateProject: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     offer_delivery_date: '',
-    maitre_ouvrage: '',
-    maitre_oeuvre: '',
+    maitre_ouvrage: undefined as number | undefined,
+    maitre_oeuvre: undefined as number | undefined,
     status: 'PENDING'
   });
 
@@ -139,8 +139,6 @@ const CreateProject: React.FC = () => {
       // Créer le projet
       const project = await ProjectService.createProject({
         ...formData,
-        maitre_ouvrage: selectedMOA.id,
-        maitre_oeuvre: selectedMOE.id
       });
 
       // Ajouter les documents requis

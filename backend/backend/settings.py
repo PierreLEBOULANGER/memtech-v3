@@ -18,6 +18,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-votre-clé-secrète-ici')
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+# Permet l'accès depuis le conteneur Docker OnlyOffice
+if 'host.docker.internal' not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS.append('host.docker.internal')
+
 # URL du frontend pour les redirections
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'http://localhost:5173')
 
@@ -35,6 +39,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+    'django_extensions',
     
     # Applications locales
     'users.apps.UsersConfig',
@@ -43,6 +48,7 @@ INSTALLED_APPS = [
     'moas.apps.MoasConfig',
     'documents',
     'ai_analysis',
+    'bibliotheque_mt',
 ]
 
 MIDDLEWARE = [
@@ -112,7 +118,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 # Configuration pour les fichiers uploadés
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10MB
@@ -149,11 +155,13 @@ SIMPLE_JWT = {
     'USER_ID_CLAIM': 'user_id',
 }
 
-# CORS settings
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:5174",
-]
+# === Configuration CORS pour permettre l'accès du frontend via Nginx ===
+# https://github.com/adamchainz/django-cors-headers
+CORS_ALLOW_ALL_ORIGINS = True  # En dev, autorise toutes les origines (à restreindre en prod)
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost",
+#     "http://127.0.0.1",
+# ]
 CORS_ALLOW_CREDENTIALS = True
 
 # Custom user model
@@ -171,3 +179,6 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@memtech.fr')
 # Configuration OpenAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview') 
+
+# Clé secrète OnlyOffice pour le JWT (à synchroniser avec la configuration du conteneur OnlyOffice)
+ONLYOFFICE_JWT_SECRET = "MaSuperCleJWTUltraSecrete2025!"  # À changer si le conteneur OnlyOffice est recréé 

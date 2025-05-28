@@ -34,7 +34,7 @@ class ProjectService {
         return response.data;
     }
 
-    static async createProject(projectData: Partial<Project>): Promise<Project> {
+    static async createProject(projectData: any): Promise<Project> {
         const response = await api.post('/api/projects/', projectData);
         return response.data;
     }

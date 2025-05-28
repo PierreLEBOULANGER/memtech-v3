@@ -357,7 +357,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
                   <SelectValue placeholder="Sélectionner un rédacteur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {writers?.map((writer: User) => (
+                  {(Array.isArray(writers) ? writers : []).map((writer: User) => (
                     <SelectItem
                       key={writer.id}
                       value={writer.id.toString()}
@@ -381,7 +381,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete }) => {
                   <SelectValue placeholder="Sélectionner un relecteur" />
                 </SelectTrigger>
                 <SelectContent>
-                  {reviewers?.map((reviewer: User) => (
+                  {(Array.isArray(reviewers) ? reviewers : []).map((reviewer: User) => (
                     <SelectItem
                       key={reviewer.id}
                       value={reviewer.id.toString()}
