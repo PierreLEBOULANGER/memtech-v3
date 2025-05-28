@@ -52,8 +52,8 @@ Thumbs.db
 venv/
 
 # Bases de données
-*.db
-data/
+# *.db
+# data/
 
 # Fichiers Python compilés
 *.pyc
