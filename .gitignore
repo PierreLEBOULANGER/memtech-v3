@@ -1,0 +1,84 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# local env files
+.env*.local
+.env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environnements virtuels Python
+venv/
+
+# Bases de données
+*.db
+data/
+
+# Fichiers Python compilés
+*.pyc
+__pycache__/
+
+# Fichiers de log
+*.log
+
+# Fichiers d'environnement
+.env*
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers de configuration locale
+local.json*
+
+# Fichiers swap et temporaires
+*.swp
+*.swo
+*.bak
+*.tmp
+
+# Certificats et clés
+*.pem
+*.crt
+*.key 

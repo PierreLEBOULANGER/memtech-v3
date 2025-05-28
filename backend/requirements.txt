@@ -1,0 +1,44 @@
+# Django et extensions Django
+Django==5.0.3
+djangorestframework==3.14.0
+django-cors-headers==4.3.1
+django-filter==23.5
+djangorestframework-simplejwt==5.3.1
+
+# Gestion des fichiers et images
+Pillow==10.2.0
+python-magic==0.4.27
+
+# Sécurité
+python-jose==3.3.0
+cryptography==42.0.5
+
+# Tests
+pytest==8.0.2
+pytest-django==4.8.0
+
+# Outils de développement
+python-dotenv==1.0.1
+gunicorn==21.2.0
+
+# Documentation
+drf-yasg==1.21.7
+
+# Base de données
+psycopg2-binary==2.9.9
+
+# Gestion des fichiers et PDF
+WeasyPrint==60.1
+python-docx==1.1.0
+
+# Tâches asynchrones
+celery==5.3.6
+redis==5.0.1
+
+# Analyse IA
+PyPDF2==3.0.1
+spacy==3.7.2
+transformers==4.36.2
+torch==2.1.2
+openai==1.12.0
+fr-core-news-lg @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_lg-3.7.0/fr_core_news_lg-3.7.0-py3-none-any.whl 

@@ -42,7 +42,6 @@ const Layout: React.FC = () => {
       <div className="flex-1 relative">
         {/* Vidéo de fond */}
         <video
-          autoPlay
           loop
           muted
           className="absolute inset-0 w-full h-full object-cover opacity-70"

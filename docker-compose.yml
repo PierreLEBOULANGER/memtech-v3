@@ -2,10 +2,10 @@ version: '3.8'
 
 services:
   onlyoffice:
-    image: onlyoffice/documentserver:8.2
+    image: onlyoffice/documentserver
     container_name: onlyoffice
     environment:
-      - JWT_ENABLED=true
+      - JWT_ENABLED=false
       - JWT_SECRET=MaSuperCleJWTUltraSecrete2025!
       - WOPI_ENABLED=true
       - ALLOW_CORS=true

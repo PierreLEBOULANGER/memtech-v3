@@ -157,12 +157,24 @@ SIMPLE_JWT = {
 
 # === Configuration CORS pour permettre l'accès du frontend via Nginx ===
 # https://github.com/adamchainz/django-cors-headers
-CORS_ALLOW_ALL_ORIGINS = True  # En dev, autorise toutes les origines (à restreindre en prod)
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost",
-#     "http://127.0.0.1",
-# ]
+CORS_ALLOW_ALL_ORIGINS = True  # En dev, autorise toutes les origines
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'GET',
+    'POST',
+    'OPTIONS',
+]
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
 
 # Custom user model
 AUTH_USER_MODEL = 'users.User'
@@ -182,3 +194,7 @@ OPENAI_MODEL = os.getenv('OPENAI_MODEL', 'gpt-4-turbo-preview')
 
 # Clé secrète OnlyOffice pour le JWT (à synchroniser avec la configuration du conteneur OnlyOffice)
 ONLYOFFICE_JWT_SECRET = "MaSuperCleJWTUltraSecrete2025!"  # À changer si le conteneur OnlyOffice est recréé 
+
+# Configuration pour le proxy SSL (important pour ngrok)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True 
