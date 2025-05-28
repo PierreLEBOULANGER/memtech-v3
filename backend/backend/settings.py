@@ -85,8 +85,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 # Database configuration
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR.parent / 'data' / 'memos.db',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('POSTGRES_DB', 'memtech'),
+        'USER': os.getenv('POSTGRES_USER', 'memtech'),
+        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'memtech'),
+        'HOST': os.getenv('POSTGRES_HOST', 'db'),
+        'PORT': os.getenv('POSTGRES_PORT', '5432'),
     }
 }
 

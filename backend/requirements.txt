@@ -4,6 +4,7 @@ djangorestframework==3.14.0
 django-cors-headers==4.3.1
 django-filter==23.5
 djangorestframework-simplejwt==5.3.1
+django-extensions==3.2.3
 
 # Gestion des fichiers et images
 Pillow==10.2.0
@@ -37,8 +38,6 @@ redis==5.0.1
 
 # Analyse IA
 PyPDF2==3.0.1
-spacy==3.7.2
 transformers==4.36.2
 torch==2.1.2
-openai==1.12.0
-fr-core-news-lg @ https://github.com/explosion/spacy-models/releases/download/fr_core_news_lg-3.7.0/fr_core_news_lg-3.7.0-py3-none-any.whl 
+openai==1.12.0 

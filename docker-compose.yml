@@ -1,6 +1,42 @@
-version: '3.8'
-
 services:
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: memtech-backend
+    volumes:
+      - ./backend:/app
+      - ./backend/media:/app/media
+      - ./backend/staticfiles:/app/staticfiles
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - DJANGO_SETTINGS_MODULE=backend.settings
+      - DATABASE_URL=postgres://memtech:memtech@db:5432/memtech
+      - DJANGO_SUPERUSER_EMAIL=${DJANGO_SUPERUSER_EMAIL:-admin@memtech.fr}
+      - DJANGO_SUPERUSER_PASSWORD=${DJANGO_SUPERUSER_PASSWORD:-admin}
+    depends_on:
+      - db
+      - onlyoffice
+    networks:
+      - memtech-network
+
+  db:
+    image: postgres:15
+    container_name: memtech-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=memtech
+      - POSTGRES_USER=memtech
+      - POSTGRES_PASSWORD=memtech
+    ports:
+      - "5432:5432"
+    networks:
+      - memtech-network
+
   onlyoffice:
     image: onlyoffice/documentserver
     container_name: onlyoffice
@@ -25,5 +61,6 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   onlyoffice_data:
   onlyoffice_logs: 
