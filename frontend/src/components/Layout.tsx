@@ -4,18 +4,20 @@
  * Intègre la barre de navigation et la barre latérale
  */
 
-import React from 'react';
 import { useNavigate, Link, Outlet } from 'react-router-dom';
-import AuthService from '../services/authService';
+import AuthService from '@/services/authService';
+import Navbar from './ui/Navbar/Navbar';
+import useAuth from '@/hooks/useAuth';
 
 /**
  * Composant Layout
  * Template principal de l'application pour les pages protégées
  * Inclut la navigation et le menu latéral
  */
-const Layout: React.FC = () => {
+const Layout = () => {
   const navigate = useNavigate();
-
+  const { user } = useAuth();
+  
   const handleLogout = async () => {
     await AuthService.logout();
     navigate('/login');
@@ -23,26 +25,14 @@ const Layout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col">
+
       {/* Bannière noire avec logo */}
-      <div className="w-full bg-black py-4 px-6 flex justify-between items-center">
-        <img
-          src="/assets/Ecriture - Courant (001).png"
-          alt="TP Courant Logo"
-          className="h-12"
-        />
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-[#ffec00] text-black rounded hover:bg-[#ffec00]/90 transition-colors font-medium"
-        >
-          Déconnexion
-        </button>
-      </div>
+      <Navbar onLogout={handleLogout} user={user} />
 
       {/* Conteneur principal avec vidéo */}
       <div className="flex-1 relative">
         {/* Vidéo de fond */}
         <video
-          autoPlay
           loop
           muted
           className="absolute inset-0 w-full h-full object-cover opacity-70"

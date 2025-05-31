@@ -127,7 +127,6 @@ const ProjectDocuments = () => {
       toast.error('Veuillez sélectionner au moins un rédacteur ou un relecteur');
       return;
     }
-
     assignRolesMutation.mutate(assignment);
   };
 
@@ -136,7 +135,7 @@ const ProjectDocuments = () => {
     try {
       const token = localStorage.getItem('access_token');
       const response = await axios.post(
-        '/api/documents/create_memoire_technique/',
+        'http://localhost:8000/api/documents/create_memoire_technique/',
         { project_id: projectId },
         {
           headers: {
@@ -144,6 +143,7 @@ const ProjectDocuments = () => {
           },
         }
       );
+
       const documentId = response.data.document_id;
       // Rediriger vers la page d'édition du mémoire technique
       navigate(`/projects/${projectId}/documents/${documentId}/memoire-technique`);

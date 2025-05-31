@@ -1,3 +1,37 @@
+# Dépendances
+node_modules/
+
+# Build output
+.next/
+dist/
+build/
+coverage/
+
+# Fichiers d'environnement
+.env*
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+
+# Fichiers de log
+*.log
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Fichiers temporaires
+*.swp
+*.swo
+
+# Public
+public/.DS_Store
+
 # Logs
 logs
 *.log
@@ -7,8 +41,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
 dist-ssr
 *.local
 

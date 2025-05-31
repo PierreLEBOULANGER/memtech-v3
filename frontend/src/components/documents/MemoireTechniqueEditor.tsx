@@ -4,7 +4,7 @@
  * Intégration de l'éditeur OnlyOffice.
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { Card } from '../ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import * as ScrollArea from '@radix-ui/react-scroll-area';
@@ -13,7 +13,6 @@ import { AnalysisResult } from '../../services/analysisService';
 import BibliothequeMemoireTechnique from './BibliothequeMemoireTechnique';
 import { BibliothequeMemoireTechnique as BibliothequeElement } from '../../types/bibliotheque';
 import OnlyOfficeEditor from './OnlyOfficeEditor';
-import axios from 'axios';
 
 interface MemoireTechniqueEditorProps {
   projectId: string;
@@ -26,73 +25,11 @@ const MemoireTechniqueEditor: React.FC<MemoireTechniqueEditorProps> = ({
 }) => {
   const [lastSave, setLastSave] = useState<string>('Jamais');
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [content, setContent] = useState<string>('');
-  const [wordUrl, setWordUrl] = useState<string | null>(null);
-  const [loadingWordUrl, setLoadingWordUrl] = useState<boolean>(true);
-  const [errorWordUrl, setErrorWordUrl] = useState<string | null>(null);
-  const [onlyofficeToken, setOnlyofficeToken] = useState<string | null>(null);
-
-  // Référence vers OnlyOfficeEditor
-  const onlyOfficeRef = useRef<any>(null);
-
-  useEffect(() => {
-    console.log(`[MemoireTechniqueEditor] Chargement du document ${documentId} du projet ${projectId}`);
-  }, [projectId, documentId]);
-
-  useEffect(() => {
-    const fetchWordUrl = async () => {
-      setLoadingWordUrl(true);
-      setErrorWordUrl(null);
-      try {
-        // Récupérer le token d'authentification pour l'API
-        const authToken = localStorage.getItem('access_token');
-        console.log('[MemoireTechniqueEditor] Token d\'authentification :', authToken ? 'Présent' : 'Absent');
-        
-        const response = await axios.get(
-          `/api/documents/${documentId}/word_url/`,
-          {
-            headers: {
-              'Authorization': `Bearer ${authToken}`
-            }
-          }
-        );
-        
-        console.log('[MemoireTechniqueEditor] Réponse API word_url :', response.data);
-        
-        // On récupère les deux URLs depuis la réponse backend
-        const onlyofficeUrl = response.data.onlyoffice_url;
-        const browserUrl = response.data.browser_url;
-        const token = response.data.onlyoffice_token;
-        if (!onlyofficeUrl || !browserUrl || !token) {
-          throw new Error('URL ou token manquant dans la réponse');
-        }
-        // On utilise onlyofficeUrl pour l'affichage dans OnlyOfficeEditor (serveur OnlyOffice dans Docker)
-        setWordUrl(onlyofficeUrl);
-        setOnlyofficeToken(token);
-      } catch (error: any) {
-        console.error('[MemoireTechniqueEditor] Erreur lors du chargement :', error);
-        setErrorWordUrl("Impossible de charger le document Word : " + (error?.response?.data?.error || error.message));
-      } finally {
-        setLoadingWordUrl(false);
-      }
-    };
-    fetchWordUrl();
-  }, [documentId]);
-
-  // Log de l'état avant le rendu
-  useEffect(() => {
-    console.log('[MemoireTechniqueEditor] State mis à jour', {
-      wordUrl,
-      onlyofficeToken,
-      loadingWordUrl,
-      errorWordUrl
-    });
-  }, [wordUrl, onlyofficeToken, loadingWordUrl, errorWordUrl]);
 
   // Fonction d'insertion depuis la bibliothèque (à adapter pour OnlyOffice)
   const handleInsertFromBibliotheque = (element: BibliothequeElement) => {
     // À implémenter avec l'API OnlyOffice
-    alert('Insertion dans OnlyOffice à implémenter');
+    console.log('Insertion dans OnlyOffice à implémenter avec l\'élément', element);
   };
 
   // Simuler une sauvegarde
@@ -118,21 +55,21 @@ const MemoireTechniqueEditor: React.FC<MemoireTechniqueEditorProps> = ({
   // Gérer l'analyse du RC
   const handleAnalysisComplete = (result: AnalysisResult) => {
     // À adapter pour OnlyOffice
-    alert('Insertion du sommaire dans OnlyOffice à implémenter');
+    console.log('Insertion dans OnlyOffice à implémenter avec l\'élément', result);
   };
 
-  // Gestion du drop dans l'éditeur (à adapter pour OnlyOffice)
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    alert('Drag & drop dans OnlyOffice à implémenter');
-  };
+  // // Gestion du drop dans l'éditeur (à adapter pour OnlyOffice)
+  // const handleDrop = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.stopPropagation();
+  //   alert('Drag & drop dans OnlyOffice à implémenter');
+  // };
 
-  // Gestion du drag over
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'copy';
-  };
+  // // Gestion du drag over
+  // const handleDragOver = (e: React.DragEvent) => {
+  //   e.preventDefault();
+  //   e.dataTransfer.dropEffect = 'copy';
+  // };
 
   return (
     <div className="h-full flex flex-col">
@@ -161,24 +98,12 @@ const MemoireTechniqueEditor: React.FC<MemoireTechniqueEditorProps> = ({
                       onAnalysisComplete={handleAnalysisComplete}
                     />
                   <div className="editor-wrapper" style={{ height: 'calc(100vh - 300px)' }}>
-                    {loadingWordUrl && (
-                      <div className="flex items-center justify-center h-full">
-                        <span className="text-gray-500">Chargement du document Word...</span>
-                      </div>
-                    )}
-                    {errorWordUrl && (
-                      <div className="flex items-center justify-center h-full">
-                        <span className="text-red-500">{errorWordUrl}</span>
-                      </div>
-                    )}
-                    {wordUrl && onlyofficeToken && !loadingWordUrl && !errorWordUrl && (
                       <div className="h-full">
                         <OnlyOfficeEditor
-                          documentUrl={wordUrl}
-                          onlyofficeToken={onlyofficeToken}
+                          projectId={projectId}
+                          documentId={documentId}
                         />
                       </div>
-                    )}
                     </div>
                   </div>
                 </Card>

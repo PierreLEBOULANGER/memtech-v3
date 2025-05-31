@@ -1,0 +1,21 @@
+# Fichiers uploadés
+media/
+
+# Fichiers Python compilés
+*.pyc
+__pycache__/
+
+# Certificats de développement
+*.crt
+*.key
+devserver.*
+
+# Fichiers de log
+*.log
+
+# Fichiers d'environnement
+.env*
+
+# Fichiers système
+.DS_Store
+Thumbs.db 
